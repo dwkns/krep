@@ -50,7 +50,8 @@ echo "---- Starting ----"
 # set some useful variables.
 appPath="/usr/local/bin/"
 applicationSupportDir=$HOME"/Library/Application Support/krep"
-outputPath=`dirname "$1"`/krep-converted 
+# outputPath=`dirname "$1"`/krep-converted 
+outputPath="$HOME/Desktop/krep-converted"
 extractedAudioPath="$applicationSupportDir/extract"
 normalizedAudioPath="$applicationSupportDir/normalize"
 compressedVideoPath="$applicationSupportDir/video"
