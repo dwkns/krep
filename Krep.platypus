@@ -11,9 +11,7 @@
 	<key>Author</key>
 	<string>dazza</string>
 	<key>BundledFiles</key>
-	<array>
-		<string>/Users/dazza/Desktop/krep/HandBrakeCLI</string>
-	</array>
+	<array/>
 	<key>Creator</key>
 	<string>Platypus-4.8</string>
 	<key>DeclareService</key>
@@ -33,7 +31,7 @@
 	<key>IconPath</key>
 	<string>/Users/dazza/Desktop/krep/krep-icons.icns</string>
 	<key>Identifier</key>
-	<string>org.dwkns.Krep</string>
+	<string>org.dazza.Krep</string>
 	<key>Interpreter</key>
 	<string>/bin/bash</string>
 	<key>InterpreterArgs</key>
