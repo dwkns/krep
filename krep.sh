@@ -114,6 +114,7 @@ if [[ $? = 0 ]] ; then
         #make extention lowercase so it's easier to test.
         fileExtension=`echo $fileExtension | tr '[:upper:]' '[:lower:]'`
 
+        extractedSub=$extractedAudioPath/$fileNameNoExt.srt
         extractedAudio=$extractedAudioPath/$fileNameNoExt.wav
         normalizeAudio=$normalizedAudioPath/$fileNameNoExt.wav
         compressedVideo=$compressedVideoPath/$fileNameNoExt.m4v
@@ -126,20 +127,28 @@ if [[ $? = 0 ]] ; then
             file="$compressedVideo"   
         fi
 
-        echo "---- Starting extraction ----"
+        echo "---- Starting audio extraction ----"
         $appPath/ffmpeg -i "$file" -y "$extractedAudio"
+
+        cho "---- Starting audio extraction ----"
+        $appPath/ffmpeg -i "$file" -y "$extractedAudio"
+
 
         echo "---- Starting volume increase  ----"
         $appPath/sox "$extractedAudio" "$normalizeAudio" vol `$appPath/sox "$extractedAudio" -n stat -v 2>&1`
 
         echo "---- Starting video creation ----"
-        $appPath/ffmpeg -i  "$file" -i "$normalizeAudio" -map 0:0 -map 1:0 -acodec libfaac  -b:a 256k -vcodec copy -y "$outputPath/$fileNameNoExt.m4v"
-        echo $appPath/ffmpeg -i  "$file" -i "$normalizeAudio" -map 0:0 -map 1:0 -acodec libfaac -b:a 256k -vcodec copy -y "$outputPath/$fileNameNoExt.m4v"
+        echo $appPath/ffmpeg -i  "$file" -i "$normalizeAudio" -acodec libfaac -b:a 256k -vcodec copy -y "$outputPath/$fileNameNoExt.m4v"
+
+
+        $appPath/ffmpeg -i  "$file" -i "$normalizeAudio" -acodec libfaac -b:a 256k -vcodec copy -y "$outputPath/$fileNameNoExt.m4v"
+        #$appPath/ffmpeg -i  "$file" -i "$normalizeAudio" -map 0:0 -map 1:0 -acodec libfaac  -b:a 256k -vcodec copy -y "$outputPath/$fileNameNoExt.m4v"
+        
         # echo $appPath/ffmpeg -i  "$file" -i "$normalizeAudio" -map 0:0 -map 1:0 -acodec libfaac -ab 96k -vcodec copy -y "$outputPath/$fileNameNoExt.m4v"
         echo "---- Cleaning up ----"
-        rm -rf "$extractedAudio"
-        rm -rf "$normalizeAudio"
-        rm -rf "$compressedVideo"
+        # rm -rf "$extractedAudio"
+        # rm -rf "$normalizeAudio"
+        # rm -rf "$compressedVideo"
         get_time_since_last_event
         echo "---- finished processing this file ----"
         echo "---- and it took $formattedTime ----"
@@ -154,3 +163,22 @@ fi
 get_time_since_start
 echo 
 echo "All done it took $formattedTime"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
