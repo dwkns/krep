@@ -86,6 +86,11 @@ if [[ $? = 0 ]] ; then
 
     echo "---- checking for ffmpeg ----"
     which -s ffmpeg || /usr/local/bin/brew install ffmpeg
+
+    echo "---- checking for HandBrakeCLI ----"
+    which -s HandBrakeCLI || /usr/local/bin/brew install https://raw.github.com/sceaga/homebrew-tap/master/handbrakecli.rb
+
+
     echo
     echo "---- $# files dropped ----"
  
@@ -114,14 +119,17 @@ if [[ $? = 0 ]] ; then
         compressedVideo=$compressedVideoPath/$fileNameNoExt.m4v
 
         if [ $fileExtension == "avi" ]; then
-            $internalPath/HandBrakeCLI -i "$file" -o "$compressedVideo" --preset="AppleTV 3" -v
+            echo "---- Starting compression ----"
+            echo $appPath/HandBrakeCLI -i "$file" -o "$compressedVideo" --preset="AppleTV 3" -v
+            $appPath/HandBrakeCLI -i "$file" -o "$compressedVideo" --preset="AppleTV 3" -v
+            # $internalPath/HandBrakeCLI -i "$file" -o "$compressedVideo" --preset="AppleTV 3" -v
             file="$compressedVideo"   
         fi
 
         echo "---- Starting extraction ----"
         $appPath/ffmpeg -i "$file" -y "$extractedAudio"
 
-        echo "---- Starting volume adjustment to max ----"
+        echo "---- Starting volume increase  ----"
         $appPath/sox "$extractedAudio" "$normalizeAudio" vol `$appPath/sox "$extractedAudio" -n stat -v 2>&1`
 
         echo "---- Starting video creation ----"
