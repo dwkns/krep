@@ -146,9 +146,9 @@ if [[ $? = 0 ]] ; then
         
         # echo $appPath/ffmpeg -i  "$file" -i "$normalizeAudio" -map 0:0 -map 1:0 -acodec libfaac -ab 96k -vcodec copy -y "$outputPath/$fileNameNoExt.m4v"
         echo "---- Cleaning up ----"
-        # rm -rf "$extractedAudio"
-        # rm -rf "$normalizeAudio"
-        # rm -rf "$compressedVideo"
+        rm -rf "$extractedAudio"
+        rm -rf "$normalizeAudio"
+        rm -rf "$compressedVideo"
         get_time_since_last_event
         echo "---- finished processing this file ----"
         echo "---- and it took $formattedTime ----"
