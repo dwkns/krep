@@ -48,7 +48,7 @@ function get_time_since_last_event () {
 START=$(date +%s)
 echo "---- Starting ----"
 # set some useful variables.
-appPath="/usr/local/bin/"
+appPath="/usr/local/bin"
 applicationSupportDir=$HOME"/Library/Application Support/krep"
 # outputPath=`dirname "$1"`/krep-converted 
 outputPath="$HOME/Desktop/krep-converted"
@@ -81,18 +81,22 @@ if [[ $? = 0 ]] ; then
       mkdir -p "$compressedVideoPath"
     fi
 
-    echo "---- checking for sox ----"
+    echo ""
+    echo "-------------------------------------------  ---- checking for sox ----"
     which -s sox || /usr/local/bin/brew install sox
 
-    echo "---- checking for ffmpeg ----"
+    echo ""
+    echo "-------------------------------------------  ---- checking for ffmpeg ----"
     which -s ffmpeg || /usr/local/bin/brew install ffmpeg
 
-    echo "---- checking for HandBrakeCLI ----"
+    echo ""
+    echo "-------------------------------------------  ---- checking for HandBrakeCLI ----"
     which -s HandBrakeCLI || /usr/local/bin/brew install https://raw.github.com/sceaga/homebrew-tap/master/handbrakecli.rb
 
 
     echo
-    echo "---- $# files dropped ----"
+    echo ""
+    echo "-------------------------------------------  ---- $# files dropped ----"
  
 
     # loop through the dropped files
@@ -102,6 +106,7 @@ if [[ $? = 0 ]] ; then
         file="$1"
         shift
  
+        echo ""
         echo "-------------------------------------------"
         echo "---- processing a dropped file : $file ----"
         echo
@@ -114,10 +119,14 @@ if [[ $? = 0 ]] ; then
         #make extention lowercase so it's easier to test.
         fileExtension=`echo $fileExtension | tr '[:upper:]' '[:lower:]'`
 
-        extractedSub=$extractedAudioPath/$fileNameNoExt.srt
+        extractedSubs=$extractedAudioPath/$fileNameNoExt.srt
+        
         extractedAudio=$extractedAudioPath/$fileNameNoExt.wav
         normalizeAudio=$normalizedAudioPath/$fileNameNoExt.wav
         compressedVideo=$compressedVideoPath/$fileNameNoExt.m4v
+
+        aacAudio=$extractedAudioPath/$fileNameNoExt.m4a
+
 
         if [ $fileExtension == "avi" ]; then
             echo "---- Starting compression ----"
@@ -127,31 +136,66 @@ if [[ $? = 0 ]] ; then
             file="$compressedVideo"   
         fi
 
-        echo "---- Starting audio extraction ----"
-        $appPath/ffmpeg -i "$file" -y "$extractedAudio"
+        echo ""
+        echo "-------------------------------------------  ---- Starting audio extraction ----"
+        echo $appPath/ffmpeg -i "$file" -vn -y "$extractedAudio"
+        $appPath/ffmpeg -i "$file" -vn -y "$extractedAudio"
 
-        cho "---- Starting audio extraction ----"
-        $appPath/ffmpeg -i "$file" -y "$extractedAudio"
-
-
-        echo "---- Starting volume increase  ----"
+        echo ""
+        echo "-------------------------------------------  ---- Starting volume increase  ----"
+        echo $appPath/sox "$extractedAudio" "$normalizeAudio" vol `$appPath/sox "$extractedAudio" -n stat -v 2>&1`
         $appPath/sox "$extractedAudio" "$normalizeAudio" vol `$appPath/sox "$extractedAudio" -n stat -v 2>&1`
 
-        echo "---- Starting video creation ----"
-        echo $appPath/ffmpeg -i  "$file" -i "$normalizeAudio" -acodec libfaac -b:a 256k -vcodec copy -y "$outputPath/$fileNameNoExt.m4v"
+        echo ""
+        echo "-------------------------------------------  ---- Creating AAC Audio  ----"
+        echo $appPath/ffmpeg -i "$normalizeAudio" -acodec libfaac -b:a 256k -y "$aacAudio"
+        $appPath/ffmpeg -i "$normalizeAudio" -acodec libfaac -b:a 256k -y "$aacAudio"
 
+        echo ""
+        echo "-------------------------------------------  ---- Starting Subtitle extraction ----"
+        echo $appPath/ffmpeg -i "$file" -vn -an -codec:s:0 srt -y "$extractedSubs"
+         
+        if $appPath/ffmpeg -i "$file" -vn -an -codec:s:0 srt -y "$extractedSubs" ; then
+            echo "-------------------------------------------Subtitles present-------------------------------------------"
+            SUBS=1
+        else
+            echo "---------------------------------------------No Subtitles----------------------------------------------"
+            SUBS=0
+        fi
 
-        $appPath/ffmpeg -i  "$file" -i "$normalizeAudio" -acodec libfaac -b:a 256k -vcodec copy -y "$outputPath/$fileNameNoExt.m4v"
-        #$appPath/ffmpeg -i  "$file" -i "$normalizeAudio" -map 0:0 -map 1:0 -acodec libfaac  -b:a 256k -vcodec copy -y "$outputPath/$fileNameNoExt.m4v"
-        
-        # echo $appPath/ffmpeg -i  "$file" -i "$normalizeAudio" -map 0:0 -map 1:0 -acodec libfaac -ab 96k -vcodec copy -y "$outputPath/$fileNameNoExt.m4v"
-        echo "---- Cleaning up ----"
+        if [ $SUBS -eq 1 ] ; then
+            #there are subtitles present in the orginal file and they have been successfully extracted
+            echo ""
+            echo "-------------------------------------------  ---- Starting video creation ----"
+            echo $appPath/ffmpeg -i  "$file" -i "$aacAudio" -acodec copy -vcodec copy -y "$compressedVideo"
+            $appPath/ffmpeg -i  "$file" -i "$aacAudio" -acodec copy -vcodec copy -y "$compressedVideo"
+                   
+            
+            echo ""
+            echo "-------------------------------------------  ---- Adding in subtitles ----"
+            echo $appPath/ffmpeg -i  "$compressedVideo" -i "$extractedSubs" -acodec copy -vcodec copy -y -scodec mov_text -y "$outputPath/$fileNameNoExt.m4v"
+            $appPath/ffmpeg -i  "$compressedVideo" -i "$extractedSubs" -acodec copy -vcodec copy -scodec mov_text -y "$outputPath/$fileNameNoExt.m4v"
+
+        else 
+            #no subtitles in the orginal file so this would be a good place to look for an external file.
+            echo ""
+            echo "-------------------------------------------  ---- Starting video creation ----"
+            echo $appPath/ffmpeg -i  "$file" -i "$aacAudio" -acodec copy -vcodec copy -y "$compressedVideo"
+            $appPath/ffmpeg -i  "$file" -i "$aacAudio" -acodec copy -vcodec copy -y "$outputPath/$fileNameNoExt.m4v"
+
+        fi
+
+       
+        echo ""
+        echo "-------------------------------------------  ---- Cleaning up ----"
         rm -rf "$extractedAudio"
         rm -rf "$normalizeAudio"
         rm -rf "$compressedVideo"
         get_time_since_last_event
-        echo "---- finished processing this file ----"
-        echo "---- and it took $formattedTime ----"
+        echo ""
+        echo "-------------------------------------------  ---- finished processing this file ----"
+        echo ""
+        echo "-------------------------------------------  ---- and it took $formattedTime ----"
         echo 
    done
 else
@@ -163,22 +207,3 @@ fi
 get_time_since_start
 echo 
 echo "All done it took $formattedTime"
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
