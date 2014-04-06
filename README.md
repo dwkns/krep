@@ -1,7 +1,7 @@
 krep
 ====
 
-Drag and drop application to process mkv and mp4 files to be iTunes friendly.
+Drag and drop application to process `.mkv` and `.mp4` files to be iTunes friendly.
 
 [Platapus](http://sveinbjorn.org/platypus) is used to provide drag and drop functionailty to a shell script.
 
