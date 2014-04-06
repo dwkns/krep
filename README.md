@@ -5,7 +5,7 @@ Drag and drop application to process `.mkv` and `.mp4` files to be iTunes friend
 
 [Platapus](http://sveinbjorn.org/platypus) is used to provide drag and drop functionailty to a shell script.
 
-The shell script `krep.sh` leverages Sox, FFMPEG and HandBrakeCLI which do all the hard work.
+The shell script `krep.sh` leverages [Sox](http://sox.sourceforge.net), [FFmpeg](http://ffmpeg.org) and [HandBrakeCLI](http://handbrake.fr/downloads2.php) which do all the hard work.
 
 The audio is extracted, normalised and then the volume increased to it's maximum without distorting. 
 
