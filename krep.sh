@@ -1,56 +1,173 @@
 #!/bin/bash
 
-# Functions
+############################## Functions ##############################
 function format_time () {
-    num=$1
-    min=0
-    hour=0
-    day=0
-    if((num>59));then
-        ((sec=num%60))
-        ((num=num/60))
-        if((num>59));then
-            ((min=num%60))
-            ((num=num/60))
-            if((num>23));then
-                ((hour=num%24))
-                ((day=num/24))
-            else
-                ((hour=num))
-            fi
-        else
-            ((min=num))
-        fi
-    else
-        ((sec=num))
-    fi
-    formattedTime="$hour hours $min mins $sec secs"
+num=$1
+min=0
+hour=0
+day=0
+if((num>59));then
+((sec=num%60))
+((num=num/60))
+if((num>59));then
+((min=num%60))
+((num=num/60))
+if((num>23));then
+((hour=num%24))
+((day=num/24))
+else
+((hour=num))
+fi
+else
+((min=num))
+fi
+else
+((sec=num))
+fi
+formattedTime="$hour hours $min mins $sec secs"
 }
 
 function get_time_since_start () {
-    END=$(date +%s)
-    DIFF=$(( $END - $START ))
-    format_time $DIFF
+END=$(date +%s)
+DIFF=$(( $END - $START ))
+format_time $DIFF
 }
 
 function get_time_since_last_event () {
-    if [[ -z "$LAST" ]] ; then
-        LAST=$START
-    fi
-    END=$(date +%s)
-    DIFF=$(( $END - $LAST ))
-    format_time $DIFF
-    LAST=$END
+if [[ -z "$LAST" ]] ; then
+LAST=$START
+fi
+END=$(date +%s)
+DIFF=$(( $END - $LAST ))
+format_time $DIFF
+LAST=$END
 }
 
+function doPrintLine () {
+stringLength=${#1}
+totalLength=$2
+symbolLength=$((($totalLength-$stringLength)/2))
+symbolString=""
+for i in $(seq 1 $symbolLength)
+do symbolString+="-"
+done
+outputString="$symbolString $1 $symbolString"
+echo
+echo $outputString
+}
 
-#script
+function printLineShort () {
+doPrintLine "$1" 50
+}
+
+function printLine () {
+doPrintLine "$1" 100
+}
+
+function processFile () {
+file="$1"
+
+
+printLine "processing a new file"
+echo "$file"
+
+fileName=`basename "$file"`
+fileAndPathNoExt="${file%.*}"
+fileNameNoExt="${fileName%.*}"
+fileExtension="${file##*.}"
+
+#make extention lowercase so it's easier to test.
+fileExtension=`echo $fileExtension | tr '[:upper:]' '[:lower:]'`
+
+extractedSubs=$extractedAudioPath/$fileNameNoExt.srt
+extractedAudio=$extractedAudioPath/$fileNameNoExt.wav
+normalizeAudio=$normalizedAudioPath/$fileNameNoExt.wav
+compressedVideo=$compressedVideoPath/$fileNameNoExt.m4v
+aacAudio=$extractedAudioPath/$fileNameNoExt.m4a
+
+
+if [ $fileExtension == "avi" ]; then
+printLine "Starting compression"
+echo $appPath/HandBrakeCLI -i "$file" -o "$compressedVideo" --preset="AppleTV 3" -v
+echo
+$appPath/HandBrakeCLI -i "$file" -o "$compressedVideo" --preset="AppleTV 3" -v
+# $internalPath/HandBrakeCLI -i "$file" -o "$compressedVideo" --preset="AppleTV 3" -v
+file="$compressedVideo"
+fi
+
+
+printLine "Starting audio extraction"
+echo $appPath/ffmpeg -i "$file" -vn -y "$extractedAudio"
+$appPath/ffmpeg -i "$file" -vn -y "$extractedAudio"
+
+
+printLine "Starting volume increase"
+echo $appPath/sox "$extractedAudio" "$normalizeAudio" vol `$appPath/sox "$extractedAudio" -n stat -v 2>&1`
+echo
+$appPath/sox "$extractedAudio" "$normalizeAudio" vol `$appPath/sox "$extractedAudio" -n stat -v 2>&1`
+
+
+# printLine "Creating AAC Audio "
+# echo $appPath/ffmpeg -i "$normalizeAudio" -acodec libfaac -b:a 256k -y "$aacAudio"
+# $appPath/ffmpeg -i "$normalizeAudio" -acodec libfaac -b:a 256k -y "$aacAudio"
+
+
+printLine "Starting Subtitle extraction"
+echo $appPath/ffmpeg -i "$file" -vn -an -codec:s:0 srt -y "$extractedSubs"
+echo
+if $appPath/ffmpeg -i "$file" -vn -an -codec:s:0 srt -y "$extractedSubs" ; then
+printLineShort "Subtitles present"
+SUBS=1
+else
+printLineShort "No Subtitles found"
+SUBS=0
+fi
+
+
+printLine "Starting video creation"
+
+
+if [ $SUBS -eq 1 ] ; then
+#there are subtitles present in the orginal file and they have been successfully extracted
+
+
+echo $appPath/ffmpeg -i  "$file" -i "$normalizeAudio" -vcodec copy -acodec libfaac -b:a 256k  -y "$compressedVideo"
+echo
+$appPath/ffmpeg -probesize 100000000 -analyzeduration 100000000 -i  "$file" -i "$normalizeAudio" -vcodec copy -acodec libfaac -b:a 256k  -y "$compressedVideo"
+
+printLineShort "Adding in subtitles"
+echo $appPath/ffmpeg -i  "$compressedVideo" -i "$extractedSubs" -acodec copy -vcodec copy -y -scodec mov_text -y "$outputPath/$fileNameNoExt.m4v"
+echo
+$appPath/ffmpeg -i  "$compressedVideo" -i "$extractedSubs" -acodec copy -vcodec copy -scodec mov_text -y "$outputPath/$fileNameNoExt.m4v"
+
+else
+
+echo $appPath/ffmpeg -i  "$file" -i "$normalizeAudio" -vcodec copy -acodec libfaac -b:a 256k  -y "$outputPath/$fileNameNoExt.m4v"
+echo
+$appPath/ffmpeg -probesize 100000000 -analyzeduration 100000000 -i  "$file" -i "$normalizeAudio" -vcodec copy -acodec libfaac -b:a 256k  -y "$outputPath/$fileNameNoExt.m4v"
+
+fi
+
+
+
+printLineShort "Cleaning up after this file"
+# rm -rf "$extractedAudio"
+# rm -rf "$normalizeAudio"
+# rm -rf "$compressedVideo"
+get_time_since_last_event
+
+printLineShort "finished processing this file"
+
+printLineShort "and it took $formattedTime"
+}
+
+############################## script ##############################
 START=$(date +%s)
-echo "---- Starting ----"
+printLine "Starting"
 # set some useful variables.
 appPath="/usr/local/bin"
 applicationSupportDir=$HOME"/Library/Application Support/krep"
-# outputPath=`dirname "$1"`/krep-converted 
+# outputPath=`dirname "$1"`/krep-converted
 outputPath="$HOME/Desktop/krep-converted"
 extractedAudioPath="$applicationSupportDir/extract"
 normalizedAudioPath="$applicationSupportDir/normalize"
@@ -58,152 +175,97 @@ compressedVideoPath="$applicationSupportDir/video"
 internalPath=`pwd`/Krep.app/Contents/Resources
 
 # Check everything we need installed actuallyis.
-echo "---- checking for brew ----"
+printLine "checking everything is installed"
+echo "checking for Homebrew"
 which -s brew
 if [[ $? = 0 ]] ; then
-    #brew is intalled -  lets go...
+echo  ">> Homebrew is installed"
+#brew is intalled -  lets go...
 
-    # Create output folder
-    if [ ! -d "$outputPath" ] ; then
-      mkdir -p "$outputPath"
-    fi
+# Create output folder
+if [ ! -d "$outputPath" ] ; then
+mkdir -p "$outputPath"
+fi
 
-    # Create temp audio folders
-    if [ ! -d "$extractedAudioPath" ] ; then
-      mkdir -p "$extractedAudioPath"
-    fi
+# Create temp audio folders
+if [ ! -d "$extractedAudioPath" ] ; then
+mkdir -p "$extractedAudioPath"
+fi
 
-    if [ ! -d "$normalizedAudioPath" ] ; then
-      mkdir -p "$normalizedAudioPath"
-    fi
+if [ ! -d "$normalizedAudioPath" ] ; then
+mkdir -p "$normalizedAudioPath"
+fi
 
-    if [ ! -d "$compressedVideoPath" ] ; then
-      mkdir -p "$compressedVideoPath"
-    fi
-
-    echo ""
-    echo "-------------------------------------------  ---- checking for sox ----"
-    which -s sox || /usr/local/bin/brew install sox
-
-    echo ""
-    echo "-------------------------------------------  ---- checking for ffmpeg ----"
-    which -s ffmpeg || /usr/local/bin/brew install ffmpeg
-
-    echo ""
-    echo "-------------------------------------------  ---- checking for HandBrakeCLI ----"
-    which -s HandBrakeCLI || /usr/local/bin/brew install https://raw.github.com/sceaga/homebrew-tap/master/handbrakecli.rb
+if [ ! -d "$compressedVideoPath" ] ; then
+mkdir -p "$compressedVideoPath"
+fi
 
 
-    echo
-    echo ""
-    echo "-------------------------------------------  ---- $# files dropped ----"
- 
-
-    # loop through the dropped files
-    # have to use this method rather than $@ as we're within Platypus.
-    while test $# -gt 0
-    do
-        file="$1"
-        shift
- 
-        echo ""
-        echo "-------------------------------------------"
-        echo "---- processing a dropped file : $file ----"
-        echo
-    
-        fileName=`basename "$file"`
-        fileAndPathNoExt="${file%.*}"
-        fileNameNoExt="${fileName%.*}"
-        fileExtension="${file##*.}"
-    
-        #make extention lowercase so it's easier to test.
-        fileExtension=`echo $fileExtension | tr '[:upper:]' '[:lower:]'`
-
-        extractedSubs=$extractedAudioPath/$fileNameNoExt.srt
-        
-        extractedAudio=$extractedAudioPath/$fileNameNoExt.wav
-        normalizeAudio=$normalizedAudioPath/$fileNameNoExt.wav
-        compressedVideo=$compressedVideoPath/$fileNameNoExt.m4v
-
-        aacAudio=$extractedAudioPath/$fileNameNoExt.m4a
+echo "checking for sox"
+which -s sox || /usr/local/bin/brew install sox
+which -s sox && echo ">> Sox is installed"
 
 
-        if [ $fileExtension == "avi" ]; then
-            echo "---- Starting compression ----"
-            echo $appPath/HandBrakeCLI -i "$file" -o "$compressedVideo" --preset="AppleTV 3" -v
-            $appPath/HandBrakeCLI -i "$file" -o "$compressedVideo" --preset="AppleTV 3" -v
-            # $internalPath/HandBrakeCLI -i "$file" -o "$compressedVideo" --preset="AppleTV 3" -v
-            file="$compressedVideo"   
-        fi
+echo "checking for ffmpeg"
+which -s ffmpeg || /usr/local/bin/brew install ffmpeg
+which -s ffmpeg && echo ">> ffmpeg is installed"
 
-        echo ""
-        echo "-------------------------------------------  ---- Starting audio extraction ----"
-        echo $appPath/ffmpeg -i "$file" -vn -y "$extractedAudio"
-        $appPath/ffmpeg -i "$file" -vn -y "$extractedAudio"
+echo "checking for HandBrakeCLI"
+which -s HandBrakeCLI || /usr/local/bin/brew install https://raw.github.com/sceaga/homebrew-tap/master/handbrakecli.rb
+which -s HandBrakeCLI && echo ">> HandBrakeCLI is installed"
 
-        echo ""
-        echo "-------------------------------------------  ---- Starting volume increase  ----"
-        echo $appPath/sox "$extractedAudio" "$normalizeAudio" vol `$appPath/sox "$extractedAudio" -n stat -v 2>&1`
-        $appPath/sox "$extractedAudio" "$normalizeAudio" vol `$appPath/sox "$extractedAudio" -n stat -v 2>&1`
+printLine "Processing files"
 
-        echo ""
-        echo "-------------------------------------------  ---- Creating AAC Audio  ----"
-        echo $appPath/ffmpeg -i "$normalizeAudio" -acodec libfaac -b:a 256k -y "$aacAudio"
-        $appPath/ffmpeg -i "$normalizeAudio" -acodec libfaac -b:a 256k -y "$aacAudio"
+echo "$# items dropped"
 
-        echo ""
-        echo "-------------------------------------------  ---- Starting Subtitle extraction ----"
-        echo $appPath/ffmpeg -i "$file" -vn -an -codec:s:0 srt -y "$extractedSubs"
-         
-        if $appPath/ffmpeg -i "$file" -vn -an -codec:s:0 srt -y "$extractedSubs" ; then
-            echo "-------------------------------------------Subtitles present-------------------------------------------"
-            SUBS=1
-        else
-            echo "---------------------------------------------No Subtitles----------------------------------------------"
-            SUBS=0
-        fi
 
-        if [ $SUBS -eq 1 ] ; then
-            #there are subtitles present in the orginal file and they have been successfully extracted
-            echo ""
-            echo "-------------------------------------------  ---- Starting video creation ----"
-            echo $appPath/ffmpeg -i  "$file" -i "$aacAudio" -acodec copy -vcodec copy -y "$compressedVideo"
-            $appPath/ffmpeg -i  "$file" -i "$aacAudio" -acodec copy -vcodec copy -y "$compressedVideo"
-                   
-            
-            echo ""
-            echo "-------------------------------------------  ---- Adding in subtitles ----"
-            echo $appPath/ffmpeg -i  "$compressedVideo" -i "$extractedSubs" -acodec copy -vcodec copy -y -scodec mov_text -y "$outputPath/$fileNameNoExt.m4v"
-            $appPath/ffmpeg -i  "$compressedVideo" -i "$extractedSubs" -acodec copy -vcodec copy -scodec mov_text -y "$outputPath/$fileNameNoExt.m4v"
+#build an array of files to process from the ones that were dropped.
+fileArray=()
 
-        else 
-            #no subtitles in the orginal file so this would be a good place to look for an external file.
-            echo ""
-            echo "-------------------------------------------  ---- Starting video creation ----"
-            echo $appPath/ffmpeg -i  "$file" -i "$aacAudio" -acodec copy -vcodec copy -y "$compressedVideo"
-            $appPath/ffmpeg -i  "$file" -i "$aacAudio" -acodec copy -vcodec copy -y "$outputPath/$fileNameNoExt.m4v"
+while test $# -gt 0
+# loop through the dropped files
+do
+PASSED="$1"
+if [[ -d $PASSED ]]; then
+# If it's a directory
 
-        fi
+echo "--- DIR ---  $PASSED is a directory"
+# do a find for all the given file types, this is recurrsive
+# so will look in all sub directories.
+# Add them to the fileArray.
 
-       
-        echo ""
-        echo "-------------------------------------------  ---- Cleaning up ----"
-        rm -rf "$extractedAudio"
-        rm -rf "$normalizeAudio"
-        rm -rf "$compressedVideo"
-        get_time_since_last_event
-        echo ""
-        echo "-------------------------------------------  ---- finished processing this file ----"
-        echo ""
-        echo "-------------------------------------------  ---- and it took $formattedTime ----"
-        echo 
-   done
+IFS=$'\n' #make it ignore the spaces in the filenames.
+tempArray=( "$(find $1 -iname '*.m4v' -o -iname '*.mp4' -o -iname '*.mkv')")
+for file in ${tempArray[@]} ; do
+fileArray=("${fileArray[@]}" "$file")
+done
+
+elif [[ -f $PASSED ]]; then
+
+echo "--- FILE --- $PASSED is a file"
+# add the file to the array.
+fileArray=("${fileArray[@]}" "$1")
 else
-    echo "This app relies on Homebrew being installed"
-    echo Open a terminal and type : 
-    echo /usr/bin/ruby -e \"\$\(curl\ \-fsSL\ https\:\/\/raw\.github\.com\/Homebrew\/homebrew\/go\/install\)\"
+echo "$PASSED is not valid"
+exit 1
+fi
+shift
+done
+echo
+echo "${#fileArray[@]} files to process"
+for i in "${fileArray[@]}"; do
+echo "$i"
+done
+for i in "${fileArray[@]}"; do
+processFile "$i"
+done
+
+
+else
+echo "#!#!##!#!##!#!##!#!##!#!##!#!# This app relies on Homebrew being installed #!#!##!#!##!#!##!#!##!#!##!#!#"
+echo Open a terminal and type :
+echo /usr/bin/ruby -e \"\$\(curl\ \-fsSL\ https\:\/\/raw\.github\.com\/Homebrew\/homebrew\/go\/install\)\"
 fi
 
 get_time_since_start
-echo 
-echo "All done it took $formattedTime"
+printLine "All done it took $formattedTime"
