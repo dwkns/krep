@@ -151,9 +151,9 @@ function processFile () {
        
         
         printLineShort "Cleaning up after this file"
-        # rm -rf "$extractedAudio"
-        # rm -rf "$normalizeAudio"
-        # rm -rf "$compressedVideo"
+         rm -rf "$extractedAudio"
+         rm -rf "$normalizeAudio"
+        rm -rf "$compressedVideo"
         get_time_since_last_event
         
         printLineShort "finished processing this file"
