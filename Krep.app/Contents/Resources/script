@@ -101,10 +101,20 @@ function processFile () {
         $appPath/ffmpeg -i "$file" -vn -y "$extractedAudio"
 
         
-        printLine "Starting volume increase"
-        echo $appPath/sox "$extractedAudio" "$normalizeAudio" vol `$appPath/sox "$extractedAudio" -n stat -v 2>&1`
-        echo
-        $appPath/sox "$extractedAudio" "$normalizeAudio" vol `$appPath/sox "$extractedAudio" -n stat -v 2>&1`
+        printLine "Starting volume increase & normalize"
+        normalizeString="gain -n : compand 0.3,1 6:-70,-60,-20 -5 -90 0.2 : gain 6"
+        echo $appPath/sox "$extractedAudio" "$normalizeAudio" $normalizeString
+        $appPath/sox "$extractedAudio" "$normalizeAudio" $normalizeString
+
+        # echo $appPath/sox "$extractedAudio" "$normalizeAudio" vol `$appPath/sox "$extractedAudio" -n stat -v 2>&1`
+        # $appPath/sox "$extractedAudio" "$normalizeAudio" vol `$appPath/sox "$extractedAudio" -n stat -v 2>&1`
+        
+        
+        
+        # echo "---------------------------------------------------------------------"
+        # sox "/Users/dazza/Desktop/vid.wav" "/Users/dazza/Desktop/final2.wav" $string3
+        # sox "/Users/dazza/Desktop/final2.wav" -n stats
+        # echo "---------------------------------------------------------------------"
 
         
         # printLine "Creating AAC Audio "
@@ -151,9 +161,9 @@ function processFile () {
        
         
         printLineShort "Cleaning up after this file"
-        # rm -rf "$extractedAudio"
-        # rm -rf "$normalizeAudio"
-        # rm -rf "$compressedVideo"
+        rm -rf "$extractedAudio"
+        rm -rf "$normalizeAudio"
+        rm -rf "$compressedVideo"
         get_time_since_last_event
         
         printLineShort "finished processing this file"
