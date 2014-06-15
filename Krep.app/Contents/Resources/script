@@ -98,30 +98,19 @@ function processFile () {
         
         printLine "Starting audio extraction"
         echo $appPath/ffmpeg -i "$file" -vn -y "$extractedAudio"
+        echo
         $appPath/ffmpeg -i "$file" -vn -y "$extractedAudio"
 
         
         printLine "Starting volume increase & normalize"
-        normalizeString="gain -n : compand 0.3,1 6:-70,-60,-20 -5 -90 0.2 : gain 6"
-        echo $appPath/sox "$extractedAudio" "$normalizeAudio" $normalizeString
-        $appPath/sox "$extractedAudio" "$normalizeAudio" $normalizeString
+        echo $appPath/sox "$extractedAudio" "$normalizeAudio" gain -n : compand 0.3,1 6:-70,-60,-20 -5 -90 0.2 : gain 6
+        echo
+        $appPath/sox "$extractedAudio" "$normalizeAudio" gain -n : compand 0.3,1 6:-70,-60,-20 -5 -90 0.2 : gain 6
 
-        # echo $appPath/sox "$extractedAudio" "$normalizeAudio" vol `$appPath/sox "$extractedAudio" -n stat -v 2>&1`
-        # $appPath/sox "$extractedAudio" "$normalizeAudio" vol `$appPath/sox "$extractedAudio" -n stat -v 2>&1`
+         # echo $appPath/sox "$extractedAudio" "$normalizeAudio" vol `$appPath/sox "$extractedAudio" -n stat -v 2>&1`
+         # $appPath/sox "$extractedAudio" "$normalizeAudio" vol `$appPath/sox "$extractedAudio" -n stat -v 2>&1`
         
         
-        
-        # echo "---------------------------------------------------------------------"
-        # sox "/Users/dazza/Desktop/vid.wav" "/Users/dazza/Desktop/final2.wav" $string3
-        # sox "/Users/dazza/Desktop/final2.wav" -n stats
-        # echo "---------------------------------------------------------------------"
-
-        
-        # printLine "Creating AAC Audio "
-        # echo $appPath/ffmpeg -i "$normalizeAudio" -acodec libfaac -b:a 256k -y "$aacAudio"
-        # $appPath/ffmpeg -i "$normalizeAudio" -acodec libfaac -b:a 256k -y "$aacAudio"
-
-
         printLine "Starting Subtitle extraction"
         echo $appPath/ffmpeg -i "$file" -vn -an -codec:s:0 srt -y "$extractedSubs"
         echo
@@ -154,6 +143,7 @@ function processFile () {
 
         echo $appPath/ffmpeg -i  "$file" -i "$normalizeAudio" -vcodec copy -acodec libfaac -b:a 256k  -y "$outputPath/$fileNameNoExt.m4v"
         echo
+        echo "is it this that fails?"
         $appPath/ffmpeg -probesize 100000000 -analyzeduration 100000000 -i  "$file" -i "$normalizeAudio" -vcodec copy -acodec libfaac -b:a 256k  -y "$outputPath/$fileNameNoExt.m4v"
         
         fi
@@ -161,9 +151,10 @@ function processFile () {
        
         
         printLineShort "Cleaning up after this file"
-        rm -rf "$extractedAudio"
-        rm -rf "$normalizeAudio"
-        rm -rf "$compressedVideo"
+        # rm -rf "$extractedAudio"
+        # rm -rf "$normalizeAudio"
+        # rm -rf "$compressedVideo"
+        # rm -rf "$extractedSubs"
         get_time_since_last_event
         
         printLineShort "finished processing this file"
