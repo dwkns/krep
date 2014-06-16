@@ -147,19 +147,9 @@ function processFile () {
         $appPath/ffmpeg -probesize 100000000 -analyzeduration 100000000 -i  "$file" -i "$normalizeAudio" -vcodec copy -acodec libfaac -b:a 256k  -y "$outputPath/$fileNameNoExt.m4v"
         
         fi
-
-       
+         get_time_since_last_event
         
-        printLineShort "Cleaning up after this file"
-        # rm -rf "$extractedAudio"
-        # rm -rf "$normalizeAudio"
-        # rm -rf "$compressedVideo"
-        # rm -rf "$extractedSubs"
-        get_time_since_last_event
-        
-        printLineShort "finished processing this file"
-        
-        printLineShort "and it took $formattedTime"
+        printLineShort "processing this file is done and took $formattedTime"
 }
 
 ############################## script ##############################
@@ -188,7 +178,7 @@ if [[ $? = 0 ]] ; then
       mkdir -p "$outputPath"
     fi
 
-    # Create temp audio folders
+    # Create temp audio / extraction folders
     if [ ! -d "$extractedAudioPath" ] ; then
       mkdir -p "$extractedAudioPath"
     fi
@@ -268,5 +258,12 @@ else
     echo /usr/bin/ruby -e \"\$\(curl\ \-fsSL\ https\:\/\/raw\.github\.com\/Homebrew\/homebrew\/go\/install\)\"
 fi
 
+printLine "Cleaning up by removing tempory files."
+rm -rf "$extractedAudioPath"
+rm -rf "$normalizedAudioPath"
+rm -rf "$compressedVideoPath"
+
 get_time_since_start
 printLine "All done it took $formattedTime"
+
+
