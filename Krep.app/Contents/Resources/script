@@ -57,10 +57,12 @@ function doPrintLine () {
 }
 
 function printLineShort () {
+    echo
     doPrintLine "$1" 50 
 }
 
 function printLine () {
+    echo
     doPrintLine "$1" 100 
 }
 
@@ -91,24 +93,15 @@ function processFile () {
             echo $appPath/HandBrakeCLI -i "$file" -o "$compressedVideo" --preset="AppleTV 3" -v
             echo
             $appPath/HandBrakeCLI -i "$file" -o "$compressedVideo" --preset="AppleTV 3" -v
-            # $internalPath/HandBrakeCLI -i "$file" -o "$compressedVideo" --preset="AppleTV 3" -v
             file="$compressedVideo"   
         fi
 
         
         printLine "Starting audio extraction"
         echo $appPath/ffmpeg -i "$file" -vn -y "$extractedAudio"
-        echo
         $appPath/ffmpeg -i "$file" -vn -y "$extractedAudio"
-
         
-        printLine "Starting volume increase & normalize"
-        echo $appPath/sox "$extractedAudio" "$normalizeAudio" gain -n : compand 0.3,1 6:-70,-60,-20 -5 -90 0.2 : gain 6
-        echo
-        $appPath/sox "$extractedAudio" "$normalizeAudio" gain -n : compand 0.3,1 6:-70,-60,-20 -5 -90 0.2 : gain 6
-
-         # echo $appPath/sox "$extractedAudio" "$normalizeAudio" vol `$appPath/sox "$extractedAudio" -n stat -v 2>&1`
-         # $appPath/sox "$extractedAudio" "$normalizeAudio" vol `$appPath/sox "$extractedAudio" -n stat -v 2>&1`
+        $appPath/ffmpeg -i "$extractedAudio" -af "volumedetect" -f null /dev/null 2>&1 | tee 2>&1 | tee #debug shows stats for exported file.
         
         
         printLine "Starting Subtitle extraction"
@@ -122,32 +115,37 @@ function processFile () {
             SUBS=0
         fi
 
+        printLine "Starting volume increase & normalize"
+        echo $appPath/sox "$extractedAudio" "$normalizeAudio" gain -n : compand 0.3,1 6:-70,-60,-20 -5 -90 0.2 
+        echo
+        $appPath/sox "$extractedAudio" "$normalizeAudio" gain -n : compand 0.3,1 6:-70,-60,-20 -5 -90 0.2 
+        $appPath/ffmpeg -i "$normalizeAudio" -af "volumedetect" -f null /dev/null 2>&1 | tee #debug shows stats for exported file.
+
             
-         printLine "Starting video creation"
-
-
+        printLine "Starting video creation"
         if [ $SUBS -eq 1 ] ; then
             #there are subtitles present in the orginal file and they have been successfully extracted
+             
+            echo $appPath/ffmpeg -i  "$file" -i "$normalizeAudio" -vcodec copy -acodec libfaac -b:a 256k  -y "$compressedVideo"
+            echo
+            $appPath/ffmpeg -probesize 100000000 -analyzeduration 100000000 -i "$normalizeAudio" -i "$file" -vcodec copy -c:a libfaac -b:a 256k  -y "$compressedVideo"
+            $appPath/ffmpeg -i "$compressedVideo" -af "volumedetect" -f null /dev/null 2>&1 | tee
             
-           
-        echo $appPath/ffmpeg -i  "$file" -i "$normalizeAudio" -vcodec copy -acodec libfaac -b:a 256k  -y "$compressedVideo"
-        echo
-        $appPath/ffmpeg -probesize 100000000 -analyzeduration 100000000 -i  "$file" -i "$normalizeAudio" -vcodec copy -acodec libfaac -b:a 256k  -y "$compressedVideo"
-
-        printLineShort "Adding in subtitles"
-        echo $appPath/ffmpeg -i  "$compressedVideo" -i "$extractedSubs" -acodec copy -vcodec copy -y -scodec mov_text -y "$outputPath/$fileNameNoExt.m4v"
-        echo
-        $appPath/ffmpeg -i  "$compressedVideo" -i "$extractedSubs" -acodec copy -vcodec copy -scodec mov_text -y "$outputPath/$fileNameNoExt.m4v"
+            printLineShort "Adding in subtitles"
+            echo $appPath/ffmpeg -i  "$compressedVideo" -i "$extractedSubs" -acodec copy -vcodec copy -scodec mov_text -y "$outputPath/$fileNameNoExt.m4v"
+            echo
+            $appPath/ffmpeg -i  "$compressedVideo" -i "$extractedSubs" -acodec copy -vcodec copy -scodec mov_text -y "$outputPath/$fileNameNoExt.m4v"
         
         else
 
-        echo $appPath/ffmpeg -i  "$file" -i "$normalizeAudio" -vcodec copy -acodec libfaac -b:a 256k  -y "$outputPath/$fileNameNoExt.m4v"
-        echo
-        echo "is it this that fails?"
-        $appPath/ffmpeg -probesize 100000000 -analyzeduration 100000000 -i  "$file" -i "$normalizeAudio" -vcodec copy -acodec libfaac -b:a 256k  -y "$outputPath/$fileNameNoExt.m4v"
-        
+            echo $appPath/ffmpeg -i  "$file" -i "$normalizeAudio" -vcodec copy -acodec libfaac -b:a 256k  -y "$outputPath/$fileNameNoExt.m4v"
+            echo
+            # $appPath/ffmpeg -probesize 100000000 -analyzeduration 100000000 -i "$file" -i "$normalizeAudio" -vcodec copy -acodec libfaac -b:a 256k  -y "$outputPath/$fileNameNoExt.m4v"
+            $appPath/ffmpeg -probesize 100000000 -analyzeduration 100000000 -i "$normalizeAudio" -i "$file" -vcodec copy -c:a libfaac -b:a 256k  -y "$outputPath/$fileNameNoExt.m4v"
+            $appPath/ffmpeg -i "$outputPath/$fileNameNoExt.m4v" -af "volumedetect" -f null /dev/null 2>&1 | tee
         fi
-         get_time_since_last_event
+        
+        get_time_since_last_event
         
         printLineShort "processing this file is done and took $formattedTime"
 }
@@ -259,11 +257,9 @@ else
 fi
 
 printLine "Cleaning up by removing tempory files."
-rm -rf "$extractedAudioPath"
-rm -rf "$normalizedAudioPath"
-rm -rf "$compressedVideoPath"
+# rm -rf "$extractedAudioPath"
+# rm -rf "$normalizedAudioPath"
+# rm -rf "$compressedVideoPath"
 
 get_time_since_start
 printLine "All done it took $formattedTime"
-
-
