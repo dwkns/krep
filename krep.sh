@@ -112,7 +112,7 @@ function processFile () {
             inputFile="$compressedVideo"   
         fi
         
-        DEBUG=1
+        DEBUG=0
         
         if [ $DEBUG -eq 1 ] ; then
             analyseFile $inputFile "Analysing input file"
