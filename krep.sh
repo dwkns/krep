@@ -43,107 +43,93 @@ function get_time_since_last_event () {
     LAST=$END
 }
 
+
+function analyseFile () { 
+    whichFile=$1
+    message="$2"
+    
+    printLineShort "$message"
+    
+    printLineShort "FFmpeg reports"
+    $appPath/ffmpeg -i $whichFile
+    
+    printLineShort "SOX Audio Analysis"
+    $appPath/ffmpeg -y -analyzeduration 500000000 -v -10 -i $whichFile -f sox - | sox -S -t sox - -n stats  
+
+}
+
 function doPrintLine () {    
-            stringLength=${#1} 
-            totalLength=$2
-            symbolLength=$((($totalLength-$stringLength)/2))
-            symbolString=""
-            for i in $(seq 1 $symbolLength) 
-                do symbolString+="-"
-            done
-            outputString="$symbolString $1 $symbolString"
-            echo
-            echo $outputString
+    stringLength=${#1} 
+    totalLength=$2
+    symbolLength=$((($totalLength-$stringLength)/2))
+    symbolString=""
+    for i in $(seq 1 $symbolLength) 
+        do symbolString+="-"
+    done
+    outputString="$symbolString $1 $symbolString"
+    echo
+    echo $outputString
 }
 
 function printLineShort () {
     echo
-    doPrintLine "$1" 50 
+    doPrintLine "$1" 80 
 }
 
 function printLine () {
     echo
-    doPrintLine "$1" 100 
+    doPrintLine "$1" 120 
 }
 
 function processFile () {
-        file="$1"
+        inputFile="$1"
         
 
         printLine "processing a new file"
-        echo "$file"
+        echo "$inputFile"
     
-        fileName=`basename "$file"`
-        fileAndPathNoExt="${file%.*}"
+        fileName=`basename "$inputFile"`
+        fileAndPathNoExt="${inputFile%.*}"
         fileNameNoExt="${fileName%.*}"
-        fileExtension="${file##*.}"
+        fileExtension="${inputFile##*.}"
     
         #make extention lowercase so it's easier to test.
         fileExtension=`echo $fileExtension | tr '[:upper:]' '[:lower:]'`
 
-        extractedSubs=$extractedAudioPath/$fileNameNoExt.srt
-        extractedAudio=$extractedAudioPath/$fileNameNoExt.wav
-        normalizeAudio=$normalizedAudioPath/$fileNameNoExt.wav
+        # extractedSubs=$extractedAudioPath/$fileNameNoExt.srt
+        # extractedAudio=$extractedAudioPath/$fileNameNoExt.wav
+        # normalizeAudio=$normalizedAudioPath/$fileNameNoExt.wav
         compressedVideo=$compressedVideoPath/$fileNameNoExt.m4v
-        aacAudio=$extractedAudioPath/$fileNameNoExt.m4a
+        outputFile="$outputPath/$fileNameNoExt.m4v"
+        # aacAudio=$extractedAudioPath/$fileNameNoExt.m4a
 
 
         if [ $fileExtension == "avi" ]; then
             printLine "Starting compression"
-            echo $appPath/HandBrakeCLI -i "$file" -o "$compressedVideo" --preset="AppleTV 3" -v
+            echo $appPath/HandBrakeCLI -i "$inputFile" -o "$compressedVideo" --preset="AppleTV 3" -v
             echo
-            $appPath/HandBrakeCLI -i "$file" -o "$compressedVideo" --preset="AppleTV 3" -v
-            file="$compressedVideo"   
+            $appPath/HandBrakeCLI -i "$inputFile" -o "$compressedVideo" --preset="AppleTV 3" -v
+            inputFile="$compressedVideo"   
+        fi
+        
+        DEBUG=1
+        
+        if [ $DEBUG -eq 1 ] ; then
+            analyseFile $inputFile "Analysing input file"
         fi
 
-        
-        printLine "Starting audio extraction"
-        echo $appPath/ffmpeg -i "$file" -vn -y "$extractedAudio"
-        $appPath/ffmpeg -i "$file" -vn -y "$extractedAudio"
-        
-        $appPath/ffmpeg -i "$extractedAudio" -af "volumedetect" -f null /dev/null 2>&1 | tee 2>&1 | tee #debug shows stats for exported file.
-        
-        
-        printLine "Starting Subtitle extraction"
-        echo $appPath/ffmpeg -i "$file" -vn -an -codec:s:0 srt -y "$extractedSubs"
-        echo
-        if $appPath/ffmpeg -i "$file" -vn -an -codec:s:0 srt -y "$extractedSubs" ; then
-            printLineShort "Subtitles present"
-            SUBS=1
-        else
-            printLineShort "No Subtitles found"
-            SUBS=0
+        printLineShort "Getting the required volume increase"
+        volumeIncrease=`ffmpeg -y -analyzeduration 500000000 -v -10 -i $inputFile -f sox - | sox -t sox - -n stat -v 2>&1`
+        echo "volumeIncrease is : "$volumeIncrease
+
+        printLineShort "Doing normalization and compand"
+        echo ffmpeg -i $inputFile  -vcodec copy -af 'compand=.3|.3:1|1:-90/-60|-60/-40|-40/-30|-20/-20:6:0:-90:0.2' -af volume=$volumeIncrease  -y $outputFile
+        ffmpeg -i $inputFile  -scodec mov_text -vcodec copy -af 'compand=.3|.3:1|1:-90/-60|-60/-40|-40/-30|-20/-20:6:0:-90:0.2' -af volume=$volumeIncrease  -y $outputFile
+
+        if [ $DEBUG -eq 1 ] ; then
+            analyseFile $outputFile "Analysing output file"
         fi
 
-        printLine "Starting volume increase & normalize"
-        echo $appPath/sox "$extractedAudio" "$normalizeAudio" gain -n : compand 0.3,1 6:-70,-60,-20 -5 -90 0.2 
-        echo
-        $appPath/sox "$extractedAudio" "$normalizeAudio" gain -n : compand 0.3,1 6:-70,-60,-20 -5 -90 0.2 
-        $appPath/ffmpeg -i "$normalizeAudio" -af "volumedetect" -f null /dev/null 2>&1 | tee #debug shows stats for exported file.
-
-            
-        printLine "Starting video creation"
-        if [ $SUBS -eq 1 ] ; then
-            #there are subtitles present in the orginal file and they have been successfully extracted
-             
-            echo $appPath/ffmpeg -i  "$file" -i "$normalizeAudio" -vcodec copy -acodec libfaac -b:a 256k  -y "$compressedVideo"
-            echo
-            $appPath/ffmpeg -probesize 100000000 -analyzeduration 100000000 -i "$normalizeAudio" -i "$file" -vcodec copy -c:a libfaac -b:a 256k  -y "$compressedVideo"
-            $appPath/ffmpeg -i "$compressedVideo" -af "volumedetect" -f null /dev/null 2>&1 | tee
-            
-            printLineShort "Adding in subtitles"
-            echo $appPath/ffmpeg -i  "$compressedVideo" -i "$extractedSubs" -acodec copy -vcodec copy -scodec mov_text -y "$outputPath/$fileNameNoExt.m4v"
-            echo
-            $appPath/ffmpeg -i  "$compressedVideo" -i "$extractedSubs" -acodec copy -vcodec copy -scodec mov_text -y "$outputPath/$fileNameNoExt.m4v"
-        
-        else
-
-            echo $appPath/ffmpeg -i  "$file" -i "$normalizeAudio" -vcodec copy -acodec libfaac -b:a 256k  -y "$outputPath/$fileNameNoExt.m4v"
-            echo
-            # $appPath/ffmpeg -probesize 100000000 -analyzeduration 100000000 -i "$file" -i "$normalizeAudio" -vcodec copy -acodec libfaac -b:a 256k  -y "$outputPath/$fileNameNoExt.m4v"
-            $appPath/ffmpeg -probesize 100000000 -analyzeduration 100000000 -i "$normalizeAudio" -i "$file" -vcodec copy -c:a libfaac -b:a 256k  -y "$outputPath/$fileNameNoExt.m4v"
-            $appPath/ffmpeg -i "$outputPath/$fileNameNoExt.m4v" -af "volumedetect" -f null /dev/null 2>&1 | tee
-        fi
         
         get_time_since_last_event
         
@@ -151,15 +137,13 @@ function processFile () {
 }
 
 ############################## script ##############################
+DEBUG=0
 START=$(date +%s)
 printLine "Starting"
 # set some useful variables.
 appPath="/usr/local/bin"
 applicationSupportDir=$HOME"/Library/Application Support/krep"
-# outputPath=`dirname "$1"`/krep-converted 
 outputPath="$HOME/Desktop/krep-converted"
-extractedAudioPath="$applicationSupportDir/extract"
-normalizedAudioPath="$applicationSupportDir/normalize"
 compressedVideoPath="$applicationSupportDir/video"
 internalPath=`pwd`/Krep.app/Contents/Resources
 
@@ -174,15 +158,6 @@ if [[ $? = 0 ]] ; then
     # Create output folder
     if [ ! -d "$outputPath" ] ; then
       mkdir -p "$outputPath"
-    fi
-
-    # Create temp audio / extraction folders
-    if [ ! -d "$extractedAudioPath" ] ; then
-      mkdir -p "$extractedAudioPath"
-    fi
-
-    if [ ! -d "$normalizedAudioPath" ] ; then
-      mkdir -p "$normalizedAudioPath"
     fi
 
     if [ ! -d "$compressedVideoPath" ] ; then
@@ -257,9 +232,7 @@ else
 fi
 
 printLine "Cleaning up by removing tempory files."
-# rm -rf "$extractedAudioPath"
-# rm -rf "$normalizedAudioPath"
-# rm -rf "$compressedVideoPath"
+rm -rf "$compressedVideoPath"
 
 get_time_since_start
 printLine "All done it took $formattedTime"
