@@ -145,13 +145,26 @@ function processFile () {
 ############################## script ##############################
 DEBUG=0
 START=$(date +%s)
-printLine "Starting"
+
+
+# get the current locaiton of this script
+DIR="$( cd "$( dirname "$0" )" && pwd )"
+#strip out /Resources from the end of the string.
+
+plistLocation=`echo ${DIR%%/Resources*}`
+
+#read the version number from the pList
+CFBundleVersion=`defaults read $plistLocation/Info.plist CFBundleVersion`;
+
+printLine "Starting version $CFBundleVersion"
+
 # set some useful variables.
 appPath="/usr/local/bin"
 applicationSupportDir=$HOME"/Library/Application Support/krep"
 outputPath="$HOME/Desktop/krep-converted"
 compressedVideoPath="$applicationSupportDir/video"
-internalPath=`pwd`/Krep.app/Contents/Resources
+
+
 
 # Check everything we need installed actuallyis.
 printLine "checking everything is installed"
