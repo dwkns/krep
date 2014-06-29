@@ -109,7 +109,7 @@ function processFile () {
             echo $appPath/HandBrakeCLI -i "$inputFile" -o "$compressedVideo" --preset="AppleTV 3" -v
             echo
             $appPath/HandBrakeCLI -i "$inputFile" -o "$compressedVideo" --preset="AppleTV 3" -v
-            inputFile="$compressedVideo"   
+            $inputFile="$compressedVideo"   
         fi
         
         DEBUG=0
