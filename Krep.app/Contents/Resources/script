@@ -1,5 +1,4 @@
-#!/bin/bash
-
+#!/bin/bash 
 ############################## Functions ##############################
 function format_time () {
     num=$1
@@ -45,16 +44,16 @@ function get_time_since_last_event () {
 
 
 function analyseFile () { 
-    whichFile=$1
+    whichFile="$1"
     message="$2"
     
     printLineShort "$message"
     
     printLineShort "FFmpeg reports"
-    $appPath/ffmpeg -i $whichFile
+    $appPath/ffmpeg -i "$whichFile"
     
     printLineShort "SOX Audio Analysis"
-    $appPath/ffmpeg -y -analyzeduration 500000000 -v -10 -i $whichFile -f sox - | sox -S -t sox - -n stats  
+    $appPath/ffmpeg -y -analyzeduration 500000000 -v -10 -i "$whichFile" -f sox - | sox -S -t sox - -n stats  
 
 }
 
@@ -95,39 +94,46 @@ function processFile () {
     
         #make extention lowercase so it's easier to test.
         fileExtension=`echo $fileExtension | tr '[:upper:]' '[:lower:]'`
-
-        # extractedSubs=$extractedAudioPath/$fileNameNoExt.srt
-        # extractedAudio=$extractedAudioPath/$fileNameNoExt.wav
-        # normalizeAudio=$normalizedAudioPath/$fileNameNoExt.wav
         compressedVideo=$compressedVideoPath/$fileNameNoExt.m4v
         outputFile="$outputPath/$fileNameNoExt.m4v"
-        # aacAudio=$extractedAudioPath/$fileNameNoExt.m4a
 
+          DEBUG=0
 
-        if [ $fileExtension == "avi" ]; then
-            printLine "Starting compression"
-            echo $appPath/HandBrakeCLI -i "$inputFile" -o "$compressedVideo" --preset="AppleTV 3" -v
-            echo
-            $appPath/HandBrakeCLI -i "$inputFile" -o "$compressedVideo" --preset="AppleTV 3" -v
-            $inputFile="$compressedVideo"   
-        fi
-        
-        DEBUG=0
-        
         if [ $DEBUG -eq 1 ] ; then
-            analyseFile $inputFile "Analysing input file"
+            analyseFile "$inputFile" "Analysing input file"
         fi
 
         printLineShort "Getting the required volume increase"
-        volumeIncrease=`ffmpeg -y -analyzeduration 500000000 -v -10 -i $inputFile -f sox - | sox -t sox - -n stat -v 2>&1`
+        volumeIncrease=`ffmpeg -y -analyzeduration 500000000 -v -10 -i "$inputFile" -f sox - | sox -t sox - -n stat -v 2>&1`
         echo "volumeIncrease is : "$volumeIncrease
 
-        printLineShort "Doing normalization and compand"
-        echo ffmpeg -i $inputFile  -vcodec copy -af 'compand=.3|.3:1|1:-90/-60|-60/-40|-40/-30|-20/-20:6:0:-90:0.2' -af volume=$volumeIncrease  -y $outputFile
-        ffmpeg -i $inputFile  -scodec mov_text -vcodec copy -af 'compand=.3|.3:1|1:-90/-60|-60/-40|-40/-30|-20/-20:6:0:-90:0.2' -af volume=$volumeIncrease  -y $outputFile
 
+      
+
+        if [ $fileExtension == "avi" ]; then
+            printLine "recompressing the AVI, doing sound normalization and compand"
+
+
+           ffmpeg  -i "$inputFile"  \
+                    -scodec mov_text \
+                    -vcodec libx264 -profile:v "high" -level:v "4.0" -crf 18 \
+                    -af 'compand=.3|.3:1|1:-90/-60|-60/-40|-40/-30|-20/-20:6:0:-90:0.2' -af volume=$volumeIncrease  \
+                    -y "$outputFile"
+         
+        else
+            printLineShort "Doing normalization and compand"
+            
+            ffmpeg  -i "$inputFile"  \
+                    -scodec mov_text \
+                    -vcodec copy \
+                    -af 'compand=.3|.3:1|1:-90/-60|-60/-40|-40/-30|-20/-20:6:0:-90:0.2' -af volume=$volumeIncrease  \
+                    -y "$outputFile"
+
+        fi
+        
+        # exit
         if [ $DEBUG -eq 1 ] ; then
-            analyseFile $outputFile "Analysing output file"
+            analyseFile "$outputFile" "Analysing output file"
         fi
 
         
@@ -174,9 +180,9 @@ if [[ $? = 0 ]] ; then
     which -s ffmpeg || /usr/local/bin/brew install ffmpeg
     which -s ffmpeg && echo ">> ffmpeg is installed"
     
-    echo "checking for HandBrakeCLI"
-    which -s HandBrakeCLI || /usr/local/bin/brew install https://raw.github.com/sceaga/homebrew-tap/master/handbrakecli.rb
-    which -s HandBrakeCLI && echo ">> HandBrakeCLI is installed"
+    # echo "checking for HandBrakeCLI"
+    # which -s HandBrakeCLI || /usr/local/bin/brew install https://raw.github.com/sceaga/homebrew-tap/master/handbrakecli.rb
+    # which -s HandBrakeCLI && echo ">> HandBrakeCLI is installed"
 
     printLine "Processing files"
     
