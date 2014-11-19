@@ -276,3 +276,4 @@ rm -rf "$compressedVideoPath"
 
 get_time_since_start
 printLine "All done it took $formattedTime"
+
