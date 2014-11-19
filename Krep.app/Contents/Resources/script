@@ -95,7 +95,9 @@ function processFile () {
         #make extention lowercase so it's easier to test.
         fileExtension=`echo $fileExtension | tr '[:upper:]' '[:lower:]'`
         compressedVideo=$compressedVideoPath/$fileNameNoExt.m4v
-        outputFile="$outputPath/$fileNameNoExt.m4v"
+       
+
+        
 
           DEBUG=0
 
@@ -111,6 +113,7 @@ function processFile () {
       
 
         if [ $fileExtension == "avi" ]; then
+            outputFile="$outputPath/$fileNameNoExt.m4v"
             printLine "recompressing the AVI, doing sound normalization and compand"
 
 
@@ -120,7 +123,16 @@ function processFile () {
                     -af 'compand=.3|.3:1|1:-90/-60|-60/-40|-40/-30|-20/-20:6:0:-90:0.2' -af volume=$volumeIncrease  \
                     -y "$outputFile"
          
+        elif [ $fileExtension == "mp3" ]; then
+            outputFile="$outputPath/$fileNameNoExt.mp3"
+            printLine "recompressing the MP3, doing sound normalization and compand"
+            
+            ffmpeg  -i "$inputFile"  \
+                    -af 'compand=.3|.3:1|1:-90/-60|-60/-40|-40/-30|-20/-20:6:0:-90:0.2' -af volume=$volumeIncrease  \
+                    -y "$outputFile"
+
         else
+            outputFile="$outputPath/$fileNameNoExt.m4v"
             printLineShort "Doing normalization and compand"
             
             ffmpeg  -i "$inputFile"  \
@@ -204,41 +216,49 @@ if [[ $? = 0 ]] ; then
 
     #build an array of files to process from the ones that were dropped.
     fileArray=()
-
+    notValidFileArray=()
     while test $# -gt 0
-    # loop through the dropped files
+    # loop through the dropped files - this is recursive
     do
         PASSED="$1"
-        if [[ -d $PASSED ]]; then
-            # If it's a directory
-            
-            echo "--- DIR ---  $PASSED is a directory"
-            # do a find for all the given file types, this is recurrsive 
-            # so will look in all sub directories.
-            # Add them to the fileArray.
-            
-            IFS=$'\n' #make it ignore the spaces in the filenames.
-            tempArray=( "$(find $1 -iname '*.m4v' -o -iname '*.mp4' -o -iname '*.mkv' -o -iname '*.avi')")
-            for file in ${tempArray[@]} ; do
-                fileArray=("${fileArray[@]}" "$file")
-            done
-            
-        elif [[ -f $PASSED ]]; then
+       
+        # if [[ -d $PASSED ]]; then
+        # Is it a directory
+        #....
+        # fi
 
-            echo "--- FILE --- $PASSED is a file"
-            # add the file to the array.
-            fileArray=("${fileArray[@]}" "$1")
-        else
-            echo "$PASSED is not valid"
-            exit 1
-        fi
+        # if [[ -f $PASSED ]]; then
+        # Is it a file
+        #....
+        # fi
+             
+        IFS=$'\n' #make it ignore the spaces in the filenames.
+        
+        validFiles=( "$(find $1 -iname '*.m4v' -o -iname '*.mp4' -o -iname '*.mkv' -o -iname '*.avi' -o -iname '*.mp3')")
+        nonValidFiles=( "$(find $1 ! \( -iname '*.m4v' -o -iname '*.mp4' -o -iname '*.mkv' -o -iname '*.avi' -o -iname '*.mp3' \))")
+
+        for file in ${validFiles[@]} ; do
+            fileArray=("${fileArray[@]}" "$file")
+        done
+
+        for file in ${nonValidFiles[@]} ; do
+            notValidFileArray=("${notValidFileArray[@]}" "$file")
+        done
+
         shift  
     done
-    echo
+   echo ""
     echo "${#fileArray[@]} files to process"
     for i in "${fileArray[@]}"; do
         echo "$i"
     done
+
+    echo ""
+    echo "Being ignored :"
+    for i in "${nonValidFiles[@]}"; do
+        echo "$i"
+    done
+
     for i in "${fileArray[@]}"; do
         processFile "$i"
     done
