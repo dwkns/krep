@@ -2,7 +2,7 @@
 currentDir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 echo "Publishing"
 
-fullGitCommitMessage=`git log -1 --pretty=%B "$currentDir/Krep.app"`;
+fullGitCommitMessage=`git log -1 --pretty=%B .`;
 gitCommitMessage=`echo ${fullGitCommitMessage%%(publish*}`;
 
 # read the current version number from the app plist;
