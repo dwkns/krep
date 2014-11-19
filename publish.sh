@@ -10,8 +10,8 @@ CFBundleShortVersionString=`defaults read "$currentDir/Krep.app/Contents/Info.pl
 CFBundleVersion=`defaults read "$currentDir/Krep.app/Contents/Info.plist" CFBundleVersion`;
 
 # increase the version numbers by 0.1;
-newCFBundleShortVersionString=`echo $CFBundleShortVersionString + 0.05 | bc`;
-newCFBundleVersion=`echo $CFBundleVersion - 0.05 | bc`;
+newCFBundleShortVersionString=`echo $CFBundleShortVersionString - 0.07 | bc`;
+newCFBundleVersion=`echo $CFBundleVersion - 0.07 | bc`;
 
 # write the new version numbers to the plists;
 defaults write "$currentDir/Krep.app/Contents/Info.plist" CFBundleShortVersionString $newCFBundleShortVersionString;
