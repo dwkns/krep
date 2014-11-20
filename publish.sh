@@ -21,5 +21,5 @@ defaults write "$currentDir/Krep.app/Contents/Info.plist" CFBundleVersion $newBu
 
 # do the git commit;
 git add -A;
-git commit -m "$gitCommitMessage (publish v$newCFBundleShortVersionString)";
+git commit -m "$gitCommitMessage (publish v$newBundleVersion)";
 git push --all; 
