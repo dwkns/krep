@@ -7,15 +7,17 @@ gitCommitMessage=`echo ${fullGitCommitMessage%%(publish*}`;
 
 # read the current version number from the app plist;
 CFBundleShortVersionString=`defaults read "$currentDir/Krep.app/Contents/Info.plist" CFBundleShortVersionString`;
-CFBundleVersion=`defaults read "$currentDir/Krep.app/Contents/Info.plist" CFBundleVersion`;
-
-# increase the version numbers by 0.1;
-newCFBundleShortVersionString=`echo $CFBundleShortVersionString + 0.01 | bc`;
-newCFBundleVersion=`echo $CFBundleVersion + 0.01 | bc`;
+newBundleVersion=`echo $CFBundleShortVersionString + 0.01 | bc`;
 
 # write the new version numbers to the plists;
-defaults write "$currentDir/Krep.app/Contents/Info.plist" CFBundleShortVersionString $newCFBundleShortVersionString;
-defaults write "$currentDir/Krep.app/Contents/Info.plist" CFBundleVersion $newCFBundleVersion;
+defaults write "$currentDir/Krep.app/Contents/Info.plist" CFBundleShortVersionString $newBundleVersion;
+defaults write "$currentDir/Krep.app/Contents/Info.plist" CFBundleVersion $newBundleVersion;
+
+#check the versions
+# CFBundleShortVersionString=`defaults read "$currentDir/Krep.app/Contents/Info.plist" CFBundleShortVersionString`;
+# CFBundleVersion=`defaults read "$currentDir/Krep.app/Contents/Info.plist" CFBundleVersion`;
+# echo "CFBundleShortVersionString is $CFBundleShortVersionString"
+# echo "CFBundleVersion is $CFBundleVersion"
 
 # do the git commit;
 git add -A;
