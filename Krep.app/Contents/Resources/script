@@ -238,13 +238,13 @@ if [[ $? = 0 ]] ; then
         if [ `echo "$githubVersion > $currentAppVersion" | bc` == 1 ]; then
           echo "Git hub version is newer. Probably should do the update then"
 
-          # wget https://github.com/dwkns/krep/archive/master.zip -O /tmp/master.zip
-          # unzip -o /tmp/master.zip -d /tmp
-          # cp -rf /tmp/krep-master/Krep.app/Contents/Info.plist /Applications/Krep.app/Contents/Info.plist
-          # cp -rf /tmp/krep-master/Krep.app/Contents/Resources/script /Applications/Krep.app/Contents/Resources/script
+          wget https://github.com/dwkns/krep/archive/master.zip -O /tmp/master.zip
+          unzip -o /tmp/master.zip -d /tmp
+          cp -rf /tmp/krep-master/Krep.app/Contents/Info.plist /Applications/Krep.app/Contents/Info.plist
+          cp -rf /tmp/krep-master/Krep.app/Contents/Resources/script /Applications/Krep.app/Contents/Resources/script
 
-          # rm -rf /tmp/master.zip
-          # rm -rf /tmp/krep-master
+          rm -rf /tmp/master.zip
+          rm -rf /tmp/krep-master
 
           echo "Well that the update done. You'll need to restart Krep"
         else
