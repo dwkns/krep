@@ -314,7 +314,7 @@ else
     
     echo "#!#!##!#!##!#!##!#!##!#!##!#!# This app relies on Homebrew being installed #!#!##!#!##!#!##!#!##!#!##!#!#"
     echo "Open a terminal and type :"
-    # echo /usr/bin/ruby -e \"\$\(curl\ \-fsSL\ https\:\/\/raw\.github\.com\/Homebrew\/homebrew\/go\/install\)\"
+    echo "/usr/bin/ruby -e \"\$\(curl -fsSL https://raw.github.com/Homebrew/homebrew/go/install)\""
 
 fi
 
