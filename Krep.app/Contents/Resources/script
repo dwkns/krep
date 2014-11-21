@@ -219,7 +219,7 @@ if [[ $? = 0 ]] ; then
     
         #Lets check to see if we have the latest version of Krep
         # get the last tag from the Krep. It's JSON 
-        githubVersionFromJSON=`curl 'https://api.github.com/repos/dwkns/krep/tags'`
+        githubVersionFromJSON=`curl --silent 'https://api.github.com/repos/dwkns/krep/tags'`
 
         # use jq to parse the JSON string and get the 'name' of the tag.
         # make the big assumption that the latest tag is at [0] in the JSON
