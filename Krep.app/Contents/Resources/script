@@ -289,7 +289,8 @@ if [[ $? = 0 ]] ; then
 
               shift  
           done
-         echo ""
+          
+          echo ""
           echo "${#fileArray[@]} files to process"
           for i in "${fileArray[@]}"; do
               echo "$i"
