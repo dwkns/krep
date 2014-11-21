@@ -246,10 +246,11 @@ if [[ $? = 0 ]] ; then
       rm -rf /tmp/master.zip
       rm -rf /tmp/krep-master
 
-      printLine "Well that the update done. You'll need to restart Krep"
       echo ""
       echo "Copying files into place."
-      
+      printLine "Well that the update done. You'll need to restart Krep"
+     
+
     else
 
       echo "Krep is up-to-date"
@@ -310,9 +311,11 @@ if [[ $? = 0 ]] ; then
 
     fi  
 else
+    
     echo "#!#!##!#!##!#!##!#!##!#!##!#!# This app relies on Homebrew being installed #!#!##!#!##!#!##!#!##!#!##!#!#"
     echo "Open a terminal and type :"
-    echo /usr/bin/ruby -e \"\$\(curl\ \-fsSL\ https\:\/\/raw\.github\.com\/Homebrew\/homebrew\/go\/install\)\"
+    # echo /usr/bin/ruby -e \"\$\(curl\ \-fsSL\ https\:\/\/raw\.github\.com\/Homebrew\/homebrew\/go\/install\)\"
+
 fi
 
 printLine "Cleaning up by removing tempory files."
