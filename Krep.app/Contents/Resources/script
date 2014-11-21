@@ -216,7 +216,7 @@ if [[ $? = 0 ]] ; then
     # which -s HandBrakeCLI || /usr/local/bin/brew install https://raw.github.com/sceaga/homebrew-tap/master/handbrakecli.rb
     # which -s HandBrakeCLI && echo ">> HandBrakeCLI is installed"
 
-    
+        printLine "Checking for updates"
         #Lets check to see if we have the latest version of Krep
         # get the last tag from the Krep. It's JSON 
         githubVersionFromJSON=`curl --silent 'https://api.github.com/repos/dwkns/krep/tags'`
@@ -246,10 +246,10 @@ if [[ $? = 0 ]] ; then
           rm -rf /tmp/master.zip
           rm -rf /tmp/krep-master
 
-          echo "Well that the update done. You'll need to restart Krep"
+          printLine "Well that the update done. You'll need to restart Krep"
         else
 
-          printLine "Krep is up-to-date"
+          echo "Krep is up-to-date"
 
 
           printLine "Processing files"
