@@ -195,6 +195,13 @@ if [[ $? = 0 ]] ; then
       mkdir -p "$compressedVideoPath"
     fi
 
+    echo "checking for wget"
+    which -s wget || /usr/local/bin/brew install wget 
+    which -s jq && echo ">> wget is installed"
+
+    echo "checking for jq"
+    which -s jq || /usr/local/bin/brew install jq 
+    which -s jq && echo ">> jq is installed"
     
     echo "checking for sox"
     which -s sox || /usr/local/bin/brew install sox 
@@ -276,4 +283,3 @@ rm -rf "$compressedVideoPath"
 
 get_time_since_start
 printLine "All done it took $formattedTime"
-
