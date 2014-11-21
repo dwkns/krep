@@ -216,59 +216,98 @@ if [[ $? = 0 ]] ; then
     # which -s HandBrakeCLI || /usr/local/bin/brew install https://raw.github.com/sceaga/homebrew-tap/master/handbrakecli.rb
     # which -s HandBrakeCLI && echo ">> HandBrakeCLI is installed"
 
-    printLine "Processing files"
     
-    echo "$# items dropped"
- 
+        #Lets check to see if we have the latest version of Krep
+        # get the last tag from the Krep. It's JSON 
+        githubVersionFromJSON=`curl 'https://api.github.com/repos/dwkns/krep/tags'`
 
-    #build an array of files to process from the ones that were dropped.
-    fileArray=()
-    notValidFileArray=()
-    while test $# -gt 0
-    # loop through the dropped files - this is recursive
-    do
-        PASSED="$1"
+        # use jq to parse the JSON string and get the 'name' of the tag.
+        # make the big assumption that the latest tag is at [0] in the JSON
+        githubVersionInQuotes=$(echo "$githubVersionFromJSON" | jq '.[0] | .name')
+
+        # strip out the leading and trailing quotes.
+        githubVersion=$(echo "$githubVersionInQuotes" | sed 's/^"\(.*\)"$/\1/')
+
+        echo "$githubVersion is the tag from Github";
+
+        currentAppVersion=`defaults read "/Applications/Krep.app/Contents/Info.plist" CFBundleShortVersionString`;
+
+        echo "$currentAppVersion is the current app version";
+
+
+        if [ `echo "$githubVersion > $currentAppVersion" | bc` == 1 ]; then
+          echo "Git hub version is newer. Probably should do the update then"
+
+          # wget https://github.com/dwkns/krep/archive/master.zip -O /tmp/master.zip
+          # unzip -o /tmp/master.zip -d /tmp
+          # cp -rf /tmp/krep-master/Krep.app/Contents/Info.plist /Applications/Krep.app/Contents/Info.plist
+          # cp -rf /tmp/krep-master/Krep.app/Contents/Resources/script /Applications/Krep.app/Contents/Resources/script
+
+          # rm -rf /tmp/master.zip
+          # rm -rf /tmp/krep-master
+
+          echo "Well that the update done. You'll need to restart Krep"
+        else
+
+          printLine "Krep is up-to-date"
+
+
+          printLine "Processing files"
+          echo "$# items dropped"
        
-        # if [[ -d $PASSED ]]; then
-        # Is it a directory
-        #....
-        # fi
 
-        # if [[ -f $PASSED ]]; then
-        # Is it a file
-        #....
-        # fi
+          #build an array of files to process from the ones that were dropped.
+          fileArray=()
+          notValidFileArray=()
+          while test $# -gt 0
+          # loop through the dropped files - this is recursive
+          do
+              PASSED="$1"
              
-        IFS=$'\n' #make it ignore the spaces in the filenames.
-        
-        validFiles=( "$(find $1 -iname '*.m4v' -o -iname '*.mp4' -o -iname '*.mkv' -o -iname '*.avi' -o -iname '*.mp3')")
-        nonValidFiles=( "$(find $1 ! \( -iname '*.m4v' -o -iname '*.mp4' -o -iname '*.mkv' -o -iname '*.avi' -o -iname '*.mp3' \))")
+              # if [[ -d $PASSED ]]; then
+              # Is it a directory
+              #....
+              # fi
 
-        for file in ${validFiles[@]} ; do
-            fileArray=("${fileArray[@]}" "$file")
-        done
+              # if [[ -f $PASSED ]]; then
+              # Is it a file
+              #....
+              # fi
+                   
+              IFS=$'\n' #make it ignore the spaces in the filenames.
+              
+              validFiles=( "$(find $1 -iname '*.m4v' -o -iname '*.mp4' -o -iname '*.mkv' -o -iname '*.avi' -o -iname '*.mp3')")
+              nonValidFiles=( "$(find $1 ! \( -iname '*.m4v' -o -iname '*.mp4' -o -iname '*.mkv' -o -iname '*.avi' -o -iname '*.mp3' \))")
 
-        for file in ${nonValidFiles[@]} ; do
-            notValidFileArray=("${notValidFileArray[@]}" "$file")
-        done
+              for file in ${validFiles[@]} ; do
+                  fileArray=("${fileArray[@]}" "$file")
+              done
 
-        shift  
-    done
-   echo ""
-    echo "${#fileArray[@]} files to process"
-    for i in "${fileArray[@]}"; do
-        echo "$i"
-    done
+              for file in ${nonValidFiles[@]} ; do
+                  notValidFileArray=("${notValidFileArray[@]}" "$file")
+              done
 
-    echo ""
-    echo "Being ignored :"
-    for i in "${nonValidFiles[@]}"; do
-        echo "$i"
-    done
+              shift  
+          done
+         echo ""
+          echo "${#fileArray[@]} files to process"
+          for i in "${fileArray[@]}"; do
+              echo "$i"
+          done
 
-    for i in "${fileArray[@]}"; do
-        processFile "$i"
-    done
+          echo ""
+          echo "Being ignored :"
+          for i in "${nonValidFiles[@]}"; do
+              echo "$i"
+          done
+
+          for i in "${fileArray[@]}"; do
+              processFile "$i"
+          done
+
+        fi
+
+
 
     
 else
