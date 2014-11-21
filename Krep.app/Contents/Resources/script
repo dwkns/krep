@@ -195,22 +195,22 @@ if [[ $? = 0 ]] ; then
       mkdir -p "$compressedVideoPath"
     fi
 
-    echo "checking for wget"
+    echo ">> checking for wget"
     which -s wget || /usr/local/bin/brew install wget 
-    which -s jq && echo ">> wget is installed"
+    which -s jq && echo "wget is installed"
 
-    echo "checking for jq"
+    echo ">> checking for jq"
     which -s jq || /usr/local/bin/brew install jq 
-    which -s jq && echo ">> jq is installed"
+    which -s jq && echo "jq is installed"
     
-    echo "checking for sox"
+    echo ">> checking for sox"
     which -s sox || /usr/local/bin/brew install sox 
-    which -s sox && echo ">> Sox is installed"
+    which -s sox && echo "Sox is installed"
 
     
-    echo "checking for ffmpeg"
+    echo ">> checking for ffmpeg"
     which -s ffmpeg || /usr/local/bin/brew install ffmpeg
-    which -s ffmpeg && echo ">> ffmpeg is installed"
+    which -s ffmpeg && echo "ffmpeg is installed"
     
     # echo "checking for HandBrakeCLI"
     # which -s HandBrakeCLI || /usr/local/bin/brew install https://raw.github.com/sceaga/homebrew-tap/master/handbrakecli.rb
