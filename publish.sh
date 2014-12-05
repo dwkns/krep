@@ -19,6 +19,7 @@ defaults write "$currentDir/Krep.app/Contents/Info.plist" CFBundleVersion $newBu
 # echo "CFBundleShortVersionString is $CFBundleShortVersionString"
 # echo "CFBundleVersion is $CFBundleVersion"
 
+
 # do the git commit;
 git add -A;
 
