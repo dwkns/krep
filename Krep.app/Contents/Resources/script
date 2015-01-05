@@ -254,7 +254,7 @@ if [[ $? = 0 ]] ; then
 
       echo ""
       echo "Copying files into place."
-      sleep 3
+      sleep 1
       printLine "Well that the update done. You'll need to restart Krep"
       exit
 
