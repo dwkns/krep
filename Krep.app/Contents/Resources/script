@@ -112,7 +112,7 @@ function processFile () {
 
         
       
-         if (( $(bc <<< "$volumefactor > 1.0") == 1 )); then
+         # if (( $(bc <<< "$volumefactor > 1.0") == 1 )); then
       
           if [ $fileExtension == "avi" ]; then
               outputFile="$outputPath/$fileNameNoExt.m4v"
@@ -149,7 +149,7 @@ function processFile () {
           if [ $DEBUG -eq 1 ] ; then
               analyseFile "$outputFile" "Analysing output file"
           fi
-      fi
+      # fi
         
         get_time_since_last_event
         
