@@ -149,6 +149,7 @@ function processFile () {
           if [ $DEBUG -eq 1 ] ; then
               analyseFile "$outputFile" "Analysing output file"
           fi
+      
       # fi
         
         get_time_since_last_event
@@ -231,6 +232,9 @@ if [[ $? = 0 ]] ; then
     githubVersion=$(echo "$githubVersionInQuotes" | sed 's/^"\(.*\)"$/\1/')
 
     echo "$githubVersion is the tag from Github";
+    
+    # githubVersion=1.59
+    # echo "Setting githubVersion to $githubVersion for testing"
 
     currentAppVersion=`defaults read "/Applications/Krep.app/Contents/Info.plist" CFBundleShortVersionString`;
 
@@ -250,8 +254,9 @@ if [[ $? = 0 ]] ; then
 
       echo ""
       echo "Copying files into place."
+      sleep 3
       printLine "Well that the update done. You'll need to restart Krep"
-     
+      exit
 
     else
 
@@ -326,3 +331,8 @@ rm -rf "$compressedVideoPath"
 
 get_time_since_start
 printLine "All done it took $formattedTime"
+
+exit
+
+
+
