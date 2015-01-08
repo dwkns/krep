@@ -122,7 +122,7 @@ function processFile () {
              ffmpeg  -i "$inputFile"  \
                       -scodec mov_text \
                       -vcodec libx264 -profile:v "high" -level:v "4.0" -crf 18 \
-                      -af 'compand=.3|.3:1|1:-90/-60|-60/-40|-40/-30|-20/-20:6:0:-90:0.2' -af volume=$volumeIncrease  \
+                      -map 0 -af 'compand=.3|.3:1|1:-90/-60|-60/-40|-40/-30|-20/-20:6:0:-90:0.2' -af volume=$volumeIncrease  \
                       -y "$outputFile"
            
           elif [ $fileExtension == "mp3" ]; then
@@ -130,7 +130,7 @@ function processFile () {
               printLine "recompressing the MP3, doing sound normalization and compand"
               
               ffmpeg  -i "$inputFile"  \
-                      -af 'compand=.3|.3:1|1:-90/-60|-60/-40|-40/-30|-20/-20:6:0:-90:0.2' -af volume=$volumeIncrease  \
+                      -map 0 -af 'compand=.3|.3:1|1:-90/-60|-60/-40|-40/-30|-20/-20:6:0:-90:0.2' -af volume=$volumeIncrease  \
                       -y "$outputFile"
 
           else
@@ -140,7 +140,7 @@ function processFile () {
               ffmpeg  -i "$inputFile"  \
                       -scodec mov_text \
                       -vcodec copy \
-                      -af 'compand=.3|.3:1|1:-90/-60|-60/-40|-40/-30|-20/-20:6:0:-90:0.2' -af volume=$volumeIncrease  \
+                      -map 0 -af 'compand=.3|.3:1|1:-90/-60|-60/-40|-40/-30|-20/-20:6:0:-90:0.2' -af volume=$volumeIncrease  \
                       -y "$outputFile"
 
           fi
