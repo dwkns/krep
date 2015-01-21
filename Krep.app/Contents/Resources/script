@@ -106,7 +106,7 @@ function processFile () {
         printLineShort "Getting the required volume increase"
         volumefactor=`ffmpeg -y -analyzeduration 500000000 -v -10 -i "$inputFile" -f sox - | sox -t sox - -n stat -v 2>&1`
        
-        volumeAboveNetural=0.1
+        volumeAboveNetural=0.05
         volumeIncrease=$(bc <<< "$volumefactor + $volumeAboveNetural")
         echo "Volume factor is : $volumefactor volume will be set to $volumeIncrease"
 
