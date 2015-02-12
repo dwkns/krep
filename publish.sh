@@ -10,7 +10,9 @@ CFBundleShortVersionString=`defaults read "$currentDir/Krep.app/Contents/Info.pl
 currentVersion=`echo $CFBundleShortVersionString | bc`;
 echo "==> Current version is : $currentVersion"
 newBundleVersion=`echo $CFBundleShortVersionString + 0.01 | bc`;
-echo "==> New verison will be : $newBundleVersion, doing commit"
+echo "==> New verison will be : $newBundleVersion"
+echo "==> Doing commit..."
+
 # write the new version numbers to the plists;
 defaults write "$currentDir/Krep.app/Contents/Info.plist" CFBundleShortVersionString $newBundleVersion;
 defaults write "$currentDir/Krep.app/Contents/Info.plist" CFBundleVersion $newBundleVersion;
@@ -29,4 +31,6 @@ git commit -m "$gitCommitMessage (publish v$newBundleVersion)";
 git tag -a $newBundleVersion -m "new version $newBundleVersion";
 git push --tags; 
 git push --all; 
+
+echo "==> Done"
 
