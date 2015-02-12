@@ -1,6 +1,6 @@
 #!/bin/bash
 currentDir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-echo "Publishing"
+echo "==> Publishing"
 
 fullGitCommitMessage=`git log -1 --pretty=%B .`;
 gitCommitMessage=`echo ${fullGitCommitMessage%%(publish*}`;
@@ -8,11 +8,9 @@ gitCommitMessage=`echo ${fullGitCommitMessage%%(publish*}`;
 # read the current version number from the app plist;
 CFBundleShortVersionString=`defaults read "$currentDir/Krep.app/Contents/Info.plist" CFBundleShortVersionString`;
 currentVersion=`echo $CFBundleShortVersionString | bc`;
-echo
-echo $currentVersion
-echo
+echo "==> Current version is : $currentVersion"
 newBundleVersion=`echo $CFBundleShortVersionString + 0.01 | bc`;
-
+echo "==> New verison will be : $newBundleVersion, doing commit"
 # write the new version numbers to the plists;
 defaults write "$currentDir/Krep.app/Contents/Info.plist" CFBundleShortVersionString $newBundleVersion;
 defaults write "$currentDir/Krep.app/Contents/Info.plist" CFBundleVersion $newBundleVersion;
