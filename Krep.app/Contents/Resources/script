@@ -212,7 +212,7 @@ if [[ $? = 0 ]] ; then
 
     
     echo "checking for ffmpeg (video manipulation & processing)"
-    which -s ffmpeg || /usr/local/bin/brew install ffmpeg --with-fdk-aac --with-ffplay --with-freetype --with-libass --with-libquvi --with-libvorbis --with-libvpx --with-opus --with-x265
+    which -s ffmpeg || /usr/local/bin/brew install ffmpeg --with-fdk-aac --with-ffplay --with-freetype --with-libass --with-libquvi --with-libvorbis --with-libvpx --with-opus --with-x265 --with-faac
     which -s ffmpeg && echo ">> ffmpeg is installed"
     
     # echo "checking for HandBrakeCLI"
