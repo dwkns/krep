@@ -7,6 +7,10 @@ gitCommitMessage=`echo ${fullGitCommitMessage%%(publish*}`;
 
 # read the current version number from the app plist;
 CFBundleShortVersionString=`defaults read "$currentDir/Krep.app/Contents/Info.plist" CFBundleShortVersionString`;
+currentVersion=`echo $CFBundleShortVersionString | bc`;
+echo
+echo $currentVersion
+echo
 newBundleVersion=`echo $CFBundleShortVersionString + 0.01 | bc`;
 
 # write the new version numbers to the plists;
