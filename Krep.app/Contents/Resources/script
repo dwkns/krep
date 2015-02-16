@@ -140,7 +140,7 @@ function processFile () {
               ffmpeg  -i "$inputFile"  \
                       -scodec mov_text \
                       -vcodec copy \
-                      -acodec libfdk-aac -map 0 -af 'compand=.3|.3:1|1:-90/-60|-60/-40|-40/-30|-20/-20:6:0:-90:0.2' -af volume=$volumeIncrease  \
+                      -map 0 -af 'compand=.3|.3:1|1:-90/-60|-60/-40|-40/-30|-20/-20:6:0:-90:0.2' -af volume=$volumeIncrease  \
                       -y "$outputFile"
 
           fi
