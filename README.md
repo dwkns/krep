@@ -10,6 +10,7 @@ The audio is normalised (companded to improved audibility in high noise environm
 
 Will update itself when new version are available.
 
+###Dependencies
 Requires [Homebrew](http://brew.sh) which you can install with... 
 
 ````
