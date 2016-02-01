@@ -1,4 +1,4 @@
-####krep
+#krep
 
 Mac drag and drop application to process `.avi` , `.mkv` and `.mp4` files to be iTunes friendly and improve their audio.
 
@@ -10,13 +10,14 @@ The audio is normalised (companded to improved audibility in high noise environm
 
 Will update itself when new version are available.
 
-Requires Homebrew which you can install with... 
+Requires [Homebrew](http://brew.sh) which you can install with... 
 
 ````
 $ ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
 ````
 
-And to install the Application use...
+##Installation 
+Run this from the command line on your local machine.
 
 ````
 $ bash <(curl -s https://raw.githubusercontent.com/dwkns/krep/master/install.sh)
