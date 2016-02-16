@@ -172,6 +172,7 @@ plistLocation=`echo ${DIR%%/Resources*}`
 CFBundleVersion=`defaults read $plistLocation/Info.plist CFBundleVersion`;
 
 printLine "Starting version $CFBundleVersion"
+echo "Homepage is at : https://github.com/dwkns/krep"
 
 # set some useful variables.
 appPath="/usr/local/bin"
