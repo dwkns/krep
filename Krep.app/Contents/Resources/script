@@ -1,5 +1,10 @@
 #!/bin/bash 
 ############################## Functions ##############################
+
+### RVM introduces an error 
+# this fixes it.
+shell_session_update() { :; }
+
 function format_time () {
     num=$1
     min=0
