@@ -56,7 +56,7 @@ function analyseFile () {
     
     printLineShort "FFmpeg reports"
     $appPath/ffmpeg -i "$whichFile"
-    
+
     printLineShort "SOX Audio Analysis"
     $appPath/ffmpeg -y -analyzeduration 500000000 -v -10 -i "$whichFile" -f sox - | sox -S -t sox - -n stats  
 
@@ -100,63 +100,67 @@ function processFile () {
         #make extention lowercase so it's easier to test.
         fileExtension=`echo $fileExtension | tr '[:upper:]' '[:lower:]'`
         compressedVideo=$compressedVideoPath/$fileNameNoExt.m4v
-       
-
-        DEBUG=0
 
         if [ $DEBUG -eq 1 ] ; then
             analyseFile "$inputFile" "Analysing input file"
         fi
+
+        printLineShort "Getting Codec"
+        CODEC=`$appPath/ffprobe -v error -select_streams v:0 -show_entries stream=codec_name -of default=noprint_wrappers=1:nokey=1 "$inputFile"`
+        echo "Codec is : "$CODEC
 
         printLineShort "Getting the required volume increase"
         volumefactor=`ffmpeg -y -analyzeduration 500000000 -v -10 -i "$inputFile" -f sox - | sox -t sox - -n stat -v 2>&1`
        
         volumeAboveNetural=0.00
         volumeIncrease=$(bc <<< "$volumefactor + $volumeAboveNetural")
-        echo "Volume factor is : $volumefactor volume will be set to $volumeIncrease"
-
-        
+        echo "Volume factor is : $volumefactor volume will be set to $volumeIncrease"   
       
-         # if (( $(bc <<< "$volumefactor > 1.0") == 1 )); then
-      
-          if [ $fileExtension == "avi" ]; then
-              outputFile="$outputPath/$fileNameNoExt.m4v"
-              printLine "recompressing the AVI, doing sound normalization and compand"
+        if [ $fileExtension == "avi" ] || [ $CODEC == "hevc" ]; then
+            outputFile="$outputPath/$fileNameNoExt.m4v"
+            printLine "Recompressing the AVI or HEVC file, doing sound normalization and compand"
 
 
-             ffmpeg  -i "$inputFile"  \
-                      -scodec mov_text \
-                      -vcodec libx264 -profile:v "high" -level:v "4.0" -crf 18 \
-                      -map 0 -af 'compand=.3|.3:1|1:-90/-60|-60/-40|-40/-30|-20/-20:6:0:-90:0.2' -af volume=$volumeIncrease  \
-                      -y "$outputFile"
-           
-          elif [ $fileExtension == "mp3" ]; then
-              outputFile="$outputPath/$fileNameNoExt.mp3"
-              printLine "recompressing the MP3, doing sound normalization and compand"
-              
-              ffmpeg  -i "$inputFile"  \
-                      -map 0 -af 'compand=.3|.3:1|1:-90/-60|-60/-40|-40/-30|-20/-20:6:0:-90:0.2' -af volume=$volumeIncrease  \
-                      -y "$outputFile"
+           ffmpeg  -i "$inputFile"  \
+                    -hide_banner \
+                    -ss 0 \
+                    -map_metadata 0 \
+                    -map_chapters 0 \
+                    -scodec mov_text \
+                    -vcodec libx264 -profile:v "high" -level:v "4.0" -crf 18 \
+                    -map 0 -af 'compand=.3|.3:1|1:-90/-60|-60/-40|-40/-30|-20/-20:6:0:-90:0.2' -af volume=$volumeIncrease  \
+                    -t 30 \
+                    -y "$outputFile"
+         
+        elif [ $fileExtension == "mp3" ]; then
+            outputFile="$outputPath/$fileNameNoExt.mp3"
+            printLine "recompressing the MP3, doing sound normalization and compand"
+            
+            ffmpeg  -i "$inputFile"  \
+                    -map 0 -af 'compand=.3|.3:1|1:-90/-60|-60/-40|-40/-30|-20/-20:6:0:-90:0.2' -af volume=$volumeIncrease  \
+                    -y "$outputFile"
 
-          else
-              outputFile="$outputPath/$fileNameNoExt.m4v"
-              printLineShort "Doing normalization and compand"
-              
-              ffmpeg  -i "$inputFile"  \
-                      -scodec mov_text \
-                      -vcodec copy \
-                      -map 0 -af 'compand=.3|.3:1|1:-90/-60|-60/-40|-40/-30|-20/-20:6:0:-90:0.2' -af volume=$volumeIncrease  \
-                      -y "$outputFile"
+        else
+            outputFile="$outputPath/$fileNameNoExt.m4v"
+            printLineShort "Doing normalization and compand"
+            
+            ffmpeg  -i "$inputFile"  \
+                    -hide_banner \
+                    -ss 0 \
+                    -map_metadata 0 \
+                    -map_chapters 0 \
+                    -scodec mov_text \
+                    -vcodec copy \
+                    -map 0 -af 'compand=.3|.3:1|1:-90/-60|-60/-40|-40/-30|-20/-20:6:0:-90:0.2' -af volume=$volumeIncrease  \
+                    -y "$outputFile"
 
-          fi
-          
-          # exit
-          if [ $DEBUG -eq 1 ] ; then
-              analyseFile "$outputFile" "Analysing output file"
-          fi
-      
-      # fi
-        
+        fi
+
+        # exit
+        if [ $DEBUG -eq 1 ] ; then
+            analyseFile "$outputFile" "Analysing output file"
+        fi
+       
         get_time_since_last_event
         
         printLineShort "processing this file is done and took $formattedTime"
@@ -339,6 +343,3 @@ get_time_since_start
 printLine "All done it took $formattedTime"
 
 exit
-
-
-
