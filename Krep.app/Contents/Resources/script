@@ -185,7 +185,7 @@ echo "Homepage is at : https://github.com/dwkns/krep"
 # set some useful variables.
 appPath="/usr/local/bin"
 applicationSupportDir=$HOME"/Library/Application Support/krep"
-outputPath="$HOME/Desktop/krep-converted"
+outputPath="$HOME/Downloads/krep-converted"
 compressedVideoPath="$applicationSupportDir/video"
 
 
