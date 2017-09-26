@@ -114,13 +114,19 @@ function processFile () {
         CODEC=`$appPath/ffprobe -v error -select_streams v:0 -show_entries stream=codec_name -of default=noprint_wrappers=1:nokey=1 "$inputFile"`
         echo "Codec is : "$CODEC
 
-        printLineShort "Getting the required volume increase"
-        volumefactor=`ffmpeg -y -analyzeduration 500000000 -v -10 -i "$inputFile" -f sox - | sox -t sox - -n stat -v 2>&1`
-       
-        volumeAboveNetural=0.00
-        volumeIncrease=$(bc <<< "$volumefactor + $volumeAboveNetural")
-        echo "Volume factor is : $volumefactor volume will be set to $volumeIncrease"   
-      
+        if [ $SKIP_AUDIO_ANALYSIS -eq 1 ] ; then
+           printLineShort "Skipping volume analysis"
+           volumeIncrease=1.0
+         else
+        
+          printLineShort "Getting the required volume increase"
+          volumefactor=`ffmpeg -y -analyzeduration 500000000 -v -10 -i "$inputFile" -f sox - | sox -t sox - -n stat -v 2>&1`
+         
+          volumeAboveNetural=0.00
+          volumeIncrease=$(bc <<< "$volumefactor + $volumeAboveNetural")
+          echo "Volume factor is : $volumefactor volume will be set to $volumeIncrease"   
+        fi
+
         if [ $fileExtension == "avi" ] || [ $CODEC == "hevc" ]; then
             outputFile="$outputPath/$fileNameNoExt.m4v"
             printLine "Recompressing the AVI or HEVC file, doing sound normalization and compand"
@@ -158,9 +164,54 @@ function processFile () {
                     -map 0 -map -v -map V \
                     -vcodec copy \
                     -af 'compand=.3|.3:1|1:-90/-60|-60/-40|-40/-30|-20/-20:6:0:-90:0.2' -af volume=$volumeIncrease  \
+                    -y "$outputFile" 
+
+        fi
+
+        if [ $? -eq 1 ] ; then
+           outputFile="$outputPath/$fileNameNoExt.m4v"
+            printLineShort "Something didn't work. Trying again without '-map 0 -map -v -map V'"
+            
+            ffmpeg  -i "$inputFile"  \
+                    -hide_banner \
+                    -ss 0 \
+                    -map_metadata 0 \
+                    -map_chapters 0 \
+                    -scodec mov_text \
+                    -vcodec copy \
+                    -af 'compand=.3|.3:1|1:-90/-60|-60/-40|-40/-30|-20/-20:6:0:-90:0.2' -af volume=$volumeIncrease  \
+                    -y "$outputFile" 
+
+        fi
+
+        if [ $? -eq 1 ] ; then
+           outputFile="$outputPath/$fileNameNoExt.m4v"
+          printLine "Something failed with that too. Attempting a full recompress."
+
+
+           ffmpeg  -i "$inputFile"  \
+                    -hide_banner \
+                    -ss 0 \
+                    -map_metadata 0 \
+                    -map_chapters 0 \
+                    -scodec mov_text \
+                    -map 0 -map -v -map V \
+                    -vcodec libx264 -profile:v "high" -level:v "4.0" -crf 18 \
+                    -map 0 -af 'compand=.3|.3:1|1:-90/-60|-60/-40|-40/-30|-20/-20:6:0:-90:0.2' -af volume=$volumeIncrease  \
                     -y "$outputFile"
 
         fi
+
+       
+
+
+
+         if [ $? -eq 1 ] ; then
+          printLine "Something failed BIG TIME!!!!"
+          printLine "Don't know how to fix this... Skipping to next file..."
+         fi
+
+        
 
         # exit
         if [ $DEBUG -eq 1 ] ; then
@@ -173,7 +224,9 @@ function processFile () {
 }
 
 ############################## script ##############################
+M4V_PROCESS_FAIL=0
 DEBUG=0
+SKIP_AUDIO_ANALYSIS=1
 START=$(date +%s)
 
 
@@ -329,6 +382,7 @@ if [[ $? = 0 ]] ; then
       done
 
       for i in "${fileArray[@]}"; do
+          $M4V_PROCESS_FAIL=0
           processFile "$i"
       done
 
