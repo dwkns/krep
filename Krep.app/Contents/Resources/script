@@ -224,9 +224,8 @@ function processFile () {
 }
 
 ############################## script ##############################
-M4V_PROCESS_FAIL=0
 DEBUG=0
-SKIP_AUDIO_ANALYSIS=1
+SKIP_AUDIO_ANALYSIS=0
 START=$(date +%s)
 
 
@@ -382,7 +381,6 @@ if [[ $? = 0 ]] ; then
       done
 
       for i in "${fileArray[@]}"; do
-          $M4V_PROCESS_FAIL=0
           processFile "$i"
       done
 
