@@ -1,4 +1,9 @@
 #!/bin/bash 
+
+# v1.80+
+# fix mjpeg track by adding -map 0 -map -v -map V
+# from https://video.stackexchange.com/questions/22284/how-to-ignore-certain-type-of-streams-mjpeg-while-encoding-videos-in-ffmpeg
+
 ############################## Functions ##############################
 
 ### RVM introduces an error 
