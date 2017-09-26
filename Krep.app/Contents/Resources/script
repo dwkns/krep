@@ -127,6 +127,7 @@ function processFile () {
                     -map_metadata 0 \
                     -map_chapters 0 \
                     -scodec mov_text \
+                    -map 0 -map -v -map V \
                     -vcodec libx264 -profile:v "high" -level:v "4.0" -crf 18 \
                     -map 0 -af 'compand=.3|.3:1|1:-90/-60|-60/-40|-40/-30|-20/-20:6:0:-90:0.2' -af volume=$volumeIncrease  \
                     -y "$outputFile"
@@ -149,9 +150,9 @@ function processFile () {
                     -map_metadata 0 \
                     -map_chapters 0 \
                     -scodec mov_text \
+                    -map 0 -map -v -map V \
                     -vcodec copy \
-                    -map 0:V \
-                    -map 0 -af 'compand=.3|.3:1|1:-90/-60|-60/-40|-40/-30|-20/-20:6:0:-90:0.2' -af volume=$volumeIncrease  \
+                    -af 'compand=.3|.3:1|1:-90/-60|-60/-40|-40/-30|-20/-20:6:0:-90:0.2' -af volume=$volumeIncrease  \
                     -y "$outputFile"
 
         fi
